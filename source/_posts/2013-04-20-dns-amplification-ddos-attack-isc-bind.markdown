@@ -7,6 +7,7 @@ categories:
 ---
 
 ** This example works for anyone running ISC BIND **
+** dns attack isc.org any query**
 
 I normally do not work with windows too much, but being on call this week I ended up having to fix a problem on a Windows 2008 server. I didn't find any documentation online, so I figured I'd add this post. 
 
@@ -14,10 +15,26 @@ For anyone running **Parallels Plesk** (unknown version, but I know our web admi
 
 **Are you affected?** 
 
+**tcpdump:**
+```
+12:28:00.121351 IP x.x.x.x.19135 > x.x.x.x.53: 10809+ [1au] ANY? isc.org. (36)
+```
+
+**bind logs:**
+```
+12:28:00.643 client x.x.x.x#49046: query: isc.org IN ANY +ED (x.x.x.x)
+12:28:00.644 client x.x.x.x#25135: query: isc.org IN ANY +ED (x.x.x.x)
+12:28:00.645 client x.x.x.x#19771: query: isc.org IN ANY +ED (x.x.x.x)
+12:28:00.646 client x.x.x.x#44031: query: isc.org IN ANY +ED (x.x.x.x)
+12:28:00.647 client x.x.x.x#31518: query: isc.org IN ANY +ED (x.x.x.x)
+```
+
 <!-- more -->
 
+**test with dig:**
+
 ```bash NOTE: x.x.x.x is YOUR dns server ip
-dig ANY isc.org @x.x.x.x +edns=0
+$ dig ANY isc.org @x.x.x.x +edns=0
 
 ; <<>> DiG 9.8.1-P1 <<>> ANY isc.org @x.x.x.x +edns=0
 ;; global options: +cmd
@@ -121,9 +138,9 @@ options {
 
 ** Now with this in place, here is the query again ** 
 ```
-dig ANY isc.org @207.115.87.48 +edns=0
+dig ANY isc.org @x.x.x.x +edns=0
 
-; <<>> DiG 9.8.1-P1 <<>> ANY isc.org @207.115.87.48 +edns=0
+; <<>> DiG 9.8.1-P1 <<>> ANY isc.org @x.x.x.x +edns=0
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: REFUSED, id: 53084
@@ -136,18 +153,18 @@ dig ANY isc.org @207.115.87.48 +edns=0
 ;isc.org.                       IN      ANY
 
 ;; Query time: 50 msec
-;; SERVER: 207.115.87.48#53(207.115.87.48)
+;; SERVER: x.x.x.x#53(x.x.x.x)
 ;; WHEN: Sat Apr 20 18:08:19 2013
 ;; MSG SIZE  rcvd: 36
 ```
 
 ```text nslookup tool... I know
-$ nslookup isc.org 207.115.87.48
-Server:         207.115.87.48
-Address:        207.115.87.48#53
+$ nslookup isc.org x.x.x.x
+Server:         x.x.x.x
+Address:        x.x.x.x#53
 
 ** server can't find isc.org: REFUSED
 ```
 
 
-There you have it. You should [http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack](http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack) if you want a more detailed break down of this attack. I have better things to do now... like have a beer. 
+There you have it. You should take a look at [http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack](http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack) if you want a more detailed break down of this attack. I have better things to do now... like have a beer. 
