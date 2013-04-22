@@ -7,11 +7,18 @@ categories:
 ---
 
 ** This example works for anyone running ISC BIND **
-** dns attack isc.org any query**
+
+** dns attack isc.org any query **
 
 I normally do not work with windows too much, but being on call this week I ended up having to fix a problem on a Windows 2008 server. I didn't find any documentation online, so I figured I'd add this post. 
 
 For anyone running **Parallels Plesk** (unknown version, but I know our web admin always keeps these up to date) make sure you lock down your ISC BIND instance. If not, you will probably run into a DNS amplification attack which will cause **named.exe** to used ALL your memory and probably even crash. 
+
+**2013-04-22 Update:** Plesk was set to only allow **_localnets_** recursion, however the built in **_localnets_** acl seems to be broken. 
+
+`
+"localnets" - matches all the IP address(es) and subnetmasks of the server on which BIND is running. For example, if the server has a single interface with an IP address of 192.168.2.3 and a netmask of 255.255.255.0 (or 192.168.2.2/24) then localnets will match 192.168.2.0 to 192.168.2.255 and 127.0.0.1 (the loopback is always present and has a single address, that is a netmask of 255.255.255.255). Some systems do not provide a way to determine the prefix lengths of local IPv6 addresses. In such a case, localnets only matches the local IP addresses, just like localhost though in this case it will apply to external and internal (same host) requests.
+`
 
 **Are you affected?** 
 
@@ -108,6 +115,7 @@ sfba.sns-pb.isc.org.    297     IN      AAAA    2001:4f8:0:2::19
 
 ** To fix this and lock down BIND  ** edit: C:\Parallels\Plesk\dns\etc\named.user.conf
 
+
 ```text Disable recursion for the DNS service 
 options {
     recursion no;
@@ -121,6 +129,7 @@ options {
 ```
 
 * Optionally, you can also use ACL's for a _cleaner_/_easier_ config
+
 ```text notice we also allow the trusted acl recursion
 acl trusted {
         127.0.0.1;
@@ -134,6 +143,8 @@ options {
     allow-query		 {trusted; }; 
 };
 ```
+
+** 2013-04-22 Update: ** Plesk will overwrite "allow-recursion { trusted; };" with the selection you have set in the web gui dns configuration with  any, localnets or none. If you choose localnets (good choice), this feature may not work properly, so you will have to set the named.user.conf file immutable (read-only). If you do not, your changes *will revert. 
 
 
 ** Now with this in place, here is the query again ** 
