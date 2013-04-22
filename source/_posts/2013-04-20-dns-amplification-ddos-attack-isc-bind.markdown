@@ -144,7 +144,9 @@ options {
 };
 ```
 
-** 2013-04-22 Update: ** Plesk will overwrite "allow-recursion { trusted; };" with the selection you have set in the web gui dns configuration with  any, localnets or none. If you choose localnets (good choice), this feature may not work properly, so you will have to set the named.user.conf file immutable (read-only). If you do not, your changes *will revert. 
+**2013-04-22 Update:** ~~Plesk will overwrite "allow-recursion { trusted; };" with the selection you have set in the web gui dns configuration with  any, localnets or none. If you choose localnets (good choice), this feature may not work properly, so you will have to set the named.user.conf file immutable (read-only). If you do not, your changes *will revert.~~
+
+**2013-04-22 Update #2: *_DO NOT_** set your file read only. Plesk Panel will break.. apperently it needs read/write access just to start. **How about we just disable recursion**. No need for this to be used as a resursive DNS server. It only needs to serve zones it's authority for. You can disable recursion as a whole in the web gui under DNS... hopefully this is finally over. 
 
 
 ** Now with this in place, here is the query again ** 
