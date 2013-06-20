@@ -1,0 +1,120 @@
+---
+layout: post
+title: "Replace wget with axel"
+date: 2013-06-20 10:22
+comments: true
+categories: 
+---
+
+I have been using wget for ages without ever questioning it. Today I had to install FC18 on a dedicated server, so I found the link over at [http://fedoraproject.org/en/get-fedora-options#formats](http://fedoraproject.org/en/get-fedora-options#formats). The url for FC18 is http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso. The fqdn download.fedoraproject.org is a CNAME pointing wildcard.fedoraproject.org which in turns resolved to other random IPs. Sometimes the IP you will get is not always the *best* possible connection, so your download speeds will vary. 
+
+## wget vs. axel 
+
+* **wget** - Downloads **~1MB/s**
+
+```
+wget http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+0% [                                      ] 4,243,464   1.24MB/s  eta 58m 39
+
+```
+
+* **axel** - Downloads **~40MB/s** with 10 connections (**-n 10**)
+
+
+```
+ axel -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ File size: 4573888512 bytes
+ Opening output file Fedora-18-x86_64-DVD.iso
+ Starting download
+ [  0%]  .......... .......... .......... .......... ..........  [14556.7KB/s]
+ ...
+ ...
+ [ 99%]  .......... .......... .......... .......... ..........  [42171.2KB/s]
+ [100%]  .......... .......... .......... .......... ..........  [42160.6KB/s]
+ [100%]  .......... .......... .......... ........
+
+Downloaded 4362.0 megabytes in 1:45 seconds. (42157.83 KB/s)
+```
+
+<!--more-->
+
+** Is 40 MB/s maybe too fast? Then limit it!**
+
+You can limit your speeds with -s (in bytes). I am not sure why they used bytes instead of something a little easier to short hand, but it works. 
+
+* **Axel** - Limited to 10MB/s (**10485760** bytes)
+```
+axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ File size: 4573888512 bytes
+ Opening output file Fedora-18-x86_64-DVD.iso
+ Starting download
+ [  0%]  .......... .......... .......... .......... ..........  [10766.6KB/s]
+ ...
+ ...
+ [  2%]  .......... .......... .......... .......... ..........  [9870.2KB/s]
+ [  2%]  .......... ........^C.. .......... .......... ..........  [9808.5KB/s]
+ [  2%]  .......... ........
+ Downloaded 71.0 megabytes in 7 seconds. (9808.50 KB/s)
+
+```
+
+* You will notice above, **I killed the download with crtl-c**, but that's OK, we can easily **resume** it!
+
+```
+ axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso 
+ Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ File size: 4573888512 bytes
+ Opening output file Fedora-18-x86_64-DVD.iso.0
+ State file found: 108204478 bytes downloaded, 4465684034 to go.
+ Starting download
+ 
+         ,,,,,,,,,, ,,,,,,,,.. .......... .......... ..........  [ 498.3KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [ 995.1KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [1490.6KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [1984.9KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [2478.4KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [2970.3KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [10382.6KB/s]
+		 [  2%]  .......... .......... .......... .......... ..........  [10278.5KB/s]
+	 
+```
+
+
+There is also an ***alternate*** output with **-a** if you don't like how verbose the output is normally.
+
+```
+ axel -a -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso -s 10485760
+ Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+ File size: 4573888512 bytes
+ Opening output file Fedora-18-x86_64-DVD.iso.0
+ State file found: 114071526 bytes downloaded, 4459816986 to go.
+ Starting download
+ 
+ [  4%] [0    1    2     3    4    5    6    7    8    9   ] [   9.9MB/s] [06:58]^C
+ Downloaded 84.7 megabytes in 8 seconds. (10174.90 KB/s)
+
+```
+
+## installing?
+
+* Debian/Ubuntu
+
+`apt-get install axel`
+
+* Redhat/Centos
+
+`yum install axel`
+
+* OSX
+
+`brew install axel`
+
+## Source
+
+* main: [http://axel.alioth.debian.org/](http://axel.alioth.debian.org/)
+
+* Freecode: [http://freecode.com/projects/axel](http://freecode.com/projects/axel)
+
+* Fork: [https://github.com/emiraga/axel](https://github.com/emiraga/axel)
