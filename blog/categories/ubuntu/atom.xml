@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ubuntu | Linux Junkie]]></title>
+  <link href="http://ljunkie.github.io/blog/categories/ubuntu/atom.xml" rel="self"/>
+  <link href="http://ljunkie.github.io/"/>
+  <updated>2013-07-02T02:08:41-07:00</updated>
+  <id>http://ljunkie.github.io/</id>
+  <author>
+    <name><![CDATA[Rob Reed]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[X11forwarding via SSH &#8211; Ubuntu &#038; lightdm]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/"/>
+    <updated>2012-09-26T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Some of the errors I ran into</strong></p>
+
+<blockquote><ul>
+<li>DISPLAY is not set</li>
+<li>Failed to allocate internet-domain X11 display socket</li>
+<li>X11 forwarding request failed on channel 0</li>
+</ul>
+</blockquote>
+
+<p>1) <strong>Make sure you have the X11forwarding enabled.</strong></p>
+
+<p>Server: <strong>/etc/ssh/sshd_config</strong><br/>
+<code>text /etc/ssh/sshd_config
+X11Forwarding yes
+X11DisplayOffset 10
+AllowTcpForwarding yes`  
+</code></p>
+
+<!-- more -->
+
+
+<p>Client: <strong>/etc/ssh/ssh_config</strong><br/>
+<code>
+ForwardX11 yes
+ForwardX11Trusted yes
+</code></p>
+
+<p>2) <strong>Enable lightdm to listen on TCP sockets</strong></p>
+
+<p>Modify and add line below to: <strong>/etc/lightdm/lightdm.conf</strong><br/>
+<code>
+xserver-allow-tcp=true
+</code></p>
+
+<p>3) <strong>If you have disabled IPv6</strong>, one more update to sshd_config is needed<br/>
+Modify and add line below to: <strong>/etc/ssh/sshd_config</strong><br/>
+<code>
+AddressFamily inet
+</code></p>
+
+<p>4) <strong>Restart lightdm and sshd – or – Reboot</strong></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ssh-add on demand]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand/"/>
+    <updated>2012-04-16T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Solution</strong>: bash alias - <code>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"</code></p>
+
+<p>Normally one would put this in their ~/.bash_profile. However with Ubuntu 11.10, at least with my install,~/.bash_profile is not included. The file to add this line to is:</p>
+
+<p><strong>~/.bash_aliases</strong>
+<code>
+alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"
+</code></p>
+
+<p><strong>More Info:</strong>
+Ubuntu does state if ~/.bash_profile does exists, then ~/.profile will not be read, so I am using what has been setup to work by default.</p>
+
+<!-- more -->
+
+
+<p>```</p>
+
+<h1>cat ~/.profile</h1>
+
+<h1>~/.profile: executed by the command interpreter for login shells.</h1>
+
+<h1>This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login</h1>
+
+<h1>exists.</h1>
+
+<p>...
+if [ -n "$BASH_VERSION" ]; then</p>
+
+<pre><code># include .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+</code></pre>
+
+<p>fi
+...
+```</p>
+
+<p>~/.profile is set to include ~/.bash_rc which is set (at least on my system) to include ~/.bash_aliases
+```</p>
+
+<h1>cat ~/.bashrc</h1>
+
+<p>...
+if [ -f ~/.bash_aliases ]; then</p>
+
+<pre><code>. ~/.bash_aliases
+</code></pre>
+
+<p>fi
+...
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[XBMC Nightly PPA for Ubuntu]]></title>
+    <link href="http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/"/>
+    <updated>2011-11-24T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>Here is a good XBMC stable and unstable/nightly PPA for Ubuntu 11.04 or 11.10</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-stable</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-nightly</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Repace VINO with x11vnc on Login]]></title>
+    <link href="http://ljunkie.github.io/blog/2010/11/24/repace-vino-with-x11vnc-on-login/"/>
+    <updated>2010-11-24T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2010/11/24/repace-vino-with-x11vnc-on-login</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>Quick guide how to use VINO server and install x11vnc…</p>
+
+<p><code>
+sudo apt-get purge vino
+sudo killall -9 vino-server
+sudo apt-get install x11vnc
+x11vnc -storepasswd
+</code></p>
+
+<ul>
+<li><p>edit file <strong>/etc/gdm/custom.conf</strong>
+```</p>
+
+<h2>add right below [daemon]</h2>
+
+<p>KillInitClients=false`
+```</p></li>
+<li><p>edit file <strong>/etc/gdm//Init/Default</strong>
+```</p>
+
+<h1>add right before the end of the file "exit 0"</h1>
+
+<p>/usr/bin/x11vnc -rfbauth  -o /var/log/x11vnc.log -shared -forever -bg -rfbport 5900`
+```</p></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Ubuntu 10.04 Lucid 5.1 HDMI Audio (Intel G45) &#8211; Boxee 5.1 HDMI Audio]]></title>
+    <link href="http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio/"/>
+    <updated>2010-10-18T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>First of all. This is for a Asus P5Q-EM motherboard with Intel G45 onboard. This doc could work for others, but of course I have no clue!</p>
+
+<p>You can verify the hardware first by running :  <a href="http://alsa.opensrc.org/index.php/Speaker-test" title="aplay -l">aplay -l</a></p>
+
+<p><code>
+ aplay -l
+**** List of PLAYBACK Hardware Devices ****
+card 0: Intel [HDA Intel], device 0: ALC1200 Analog [ALC1200 Analog]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+card 0: Intel [HDA Intel], device 1: ALC1200 Digital [ALC1200 Digital]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+card 0: Intel [HDA Intel], device 3: INTEL HDMI 0 [INTEL HDMI 0]
+Subdevices: 0/1
+Subdevice #0: subdevice #0
+</code></p>
+
+<!-- more -->
+
+
+<p>You’ll notice card 0 device 3 is the Intel HDMI Audio.. If you don’t have the Intel, look for HDMI and figure out the card and device id for the HDMI out.</p>
+
+<p>A way to test the audio from the card is available by running this speaker-test on the console.</p>
+
+<p><code>
+speaker-test -Dhdmi:Intel -c6 -twavq
+</code></p>
+
+<p>If that doesn’t work, maybe you don’ thave the intel card, so the -D would not work for your. You can try (replace 0,3 with whatever card,device you have from the output above).</p>
+
+<p><code>
+speaker-test -Dhw:0,3 -c6 -twavq
+</code></p>
+
+<h3>The Howto Start for getting 5.1 HDMI Audio in Ubuntu 10.04</h3>
+
+<p>1) Remove  PULSEAUDIO (replace with ALSA)</p>
+
+<p><code>
+sudo apt-get purge pulseaudio gstreamer0.10-pulseaudio
+</code></p>
+
+<p><code>
+sudo apt-get autoremove
+sudo apt-get install alsa-base alsa-tools alsa-tools-gui alsa-utils alsa-oss linux-sound-base alsamixergui
+sudo apt-get install esound esound-clients esound-common gnome-alsamixer
+</code></p>
+
+<p>2) Reboot</p>
+
+<p>3) Set default audio card (HDMI)  *this step I don’t think does much.. but I did it and my system works… so why not</p>
+
+<p><code>
+gstreamer-properties
+</code></p>
+
+<p>4) THE MOST IMPORTANT STEP.! This will set the HDMI out as the default card so Boxee will work properly with your audio</p>
+
+<p>Create an ~/.asoundrc file for the user you login with when you run Boxee</p>
+
+<p>```
+$ cat &gt; ~/.asoundrc</p>
+
+<h1>START</h1>
+
+<p>pcm.dmixer {
+type dmix
+ipc_key 1024
+ipc_key_add_uid false
+ipc_perm 0660
+slave  {
+pcm "hw:0,3"
+rate 48000
+channels 2
+format S32_LE
+period_time 0
+period_size 1024
+buffer_time 0
+buffer_size 4096
+}
+}
+pcm.!default {
+type plug
+slave.pcm "dmixer"
+}</p>
+
+<h1>END</h1>
+
+<p>```</p>
+
+<ul>
+<li><code>ctrl-d</code> to end the cat</li>
+</ul>
+
+
+<p>5) Disable HARDWARE Acceleration for Video. Otherwise <a href="http://www.boxee.tv/" title="Boxee">Boxee</a> will just crash on any local video playback.</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li>go to – settings -> media -> advanced</li>
+<li>uncheck — ‘enable hardware assisited decoding when possible’</li>
+<li>Render Method: Software (or Auto might work)</li>
+</ul>
+
+
+<p>6) Sound Config Setup</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li><p>go to – settings -> system -> Audio Hardware</p></li>
+<li><p>Audio Output: Digital</p></li>
+<li>DTS Capable Reciever: checked</li>
+<li>Dolby Digital (AC3) Reciever: checked</li>
+<li>Audio output device: default</li>
+<li>Passthrough output device: default`</li>
+<li>Downmix multichannel audio to stereo: UNCHECK</li>
+</ul>
+
+
+<p>** NOTE: I will post how to get <a href="http://www.boxee.tv/" title="Boxee">BOXEE </a>installed soon since that was also a pain in the ass with 10.04 release.</p>
+]]></content>
+  </entry>
+  
+</feed>

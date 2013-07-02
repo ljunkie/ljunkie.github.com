@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>plexWatch - push notification and history for PMS watched status - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="Download: github.com/ljunkie/plexWatch
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WIKI: rarforge.com/w/index.php/PlexWatch
+& &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2013/07/02/plexwatch">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">plexWatch - Push Notification and History for PMS Watched Status</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-02T01:33:00-07:00" pubdate data-updated="true">Jul 2<span>nd</span>, 2013</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><blockquote><ul>
+<li><strong>Download</strong>: <a href="https://github.com/ljunkie/plexWatch">github.com/ljunkie/plexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>WIKI</strong>: <a href="https://rarforge.com/w/index.php/PlexWatch">rarforge.com/w/index.php/PlexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Forum</strong>: <a href="http://forums.plexapp.com/index.php/topic/72552-plexwatch-plex-notify-script-send-push-alerts-on-new-sessions-and-stopped/">forums.plexapp.com</a></li>
+</ul>
+</blockquote>
+
+<p><strong>Notify</strong> and Log <strong>Now Playing</strong> content from a Plex Media Server</p>
+
+<p><strong>Suported Push Notifications</strong></p>
+
+<blockquote><ul>
+<li><a href="https://pushover.net">https://pushover.net</a> (not fully tested - want to gift me the app for iOS/android?)</li>
+<li><a href="https://prowlapp.com">https://prowlapp.com</a> (tested)</li>
+</ul>
+</blockquote>
+
+<p><strong>What it does</strong></p>
+
+<blockquote><ul>
+<li>Checks if a video has been started or stopped - log and notify</li>
+<li>Notifies via prowl, pushover and/or a log file</li>
+<li>backed by a sqlite DB (for state and history)</li>
+<li>cli to view history and stats</li>
+</ul>
+</blockquote>
+
+<h2>Perl Requirements</h2>
+
+<blockquote><ul>
+<li>LWP::UserAgent</li>
+<li>WWW::Curl::Easy</li>
+<li>XML::Simple</li>
+<li>DBI</li>
+<li>Time::Duration;</li>
+<li>Time::ParseDate;</li>
+<li>Pod::Usage;       (perl base on rhel/centos)</li>
+<li>Fcntl qw(:flock); (perl base)</li>
+<li>Getopt::Long;     (perl base)</li>
+</ul>
+</blockquote>
+
+<h2>Install</h2>
+
+<p>1) <code>sudo wget -P /opt/plexWatch/ https://raw.github.com/ljunkie/plexWatch/master/plexWatch.pl</code></p>
+
+<p>2) <code>sudo chmod 755 /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>3) <code>sudo nano /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>&#8221;Modify Variables as needed&#8221;:</p>
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$server = &#39;localhost&#39;;   ## IP of PMS - or localhost
+</span><span class='line'>$port   = 32400;         ## port of PMS
+</span><span class='line'>$notify_started = 1;   ## notify when a stream is started (first play)
+</span><span class='line'>$notify_stopped = 1;   ## notify when a stream is stopped
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>## Give a user a more friendly name. I.E. REAL_USER will now be Frank
+</span><span class='line'>## OPTIONAL
+</span><span class='line'>my $user_display = {&#39;REAL_USER1&#39; =&gt; &#39;Frank&#39;,
+</span><span class='line'>                    &#39;REAL_USER2&#39; =&gt; &#39;Carrie&#39;,
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$notify = {...
+</span><span class='line'>
+</span><span class='line'>* to enable a provider, i.e. file, prowl, pushover
+</span><span class='line'>   set &#39;enabled&#39; =&gt; 1, under selected provider
+</span><span class='line'>
+</span><span class='line'>* Prowl: required you fill in &#39;apikey&#39;
+</span><span class='line'>* PushOver: required to fill in &#39;token&#39; and &#39;user&#39;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) Install Perl requirements</p>
+
+<ul>
+<li><strong>Debian/Ubuntu</strong> - apt-get</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>apt-get</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>sudo apt-get install libwww-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libwww-curl-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libxml-simple-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-duration-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-modules-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libdbd-sqlite3-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install perl-doc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>RHEL/Centos</strong> - yum</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>yum</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>yum -y install perl\(LWP::UserAgent\) perl\(WWW::Curl::Easy\) perl\(XML::Simple\) \
+</span><span class='line'>               perl\(DBI\) perl\(Time::Duration\)  perl\(Time::ParseDate\)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>5) <strong>run</strong> the script manually to verify it works: <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<blockquote><ul>
+<li>start video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<ul>
+<li>stop video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p></blockquote>
+
+<p>6) sudo nano /etc/crontab</p>
+
+<figure class='code'><figcaption><span>/etc/crontab</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>* * * * * root cd /opt/plexWatch &amp;&amp; /opt/plexWatch/plexWatch.pl
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<hr />
+
+<h1>Using the script</h1>
+
+<h3>Sending Notifications</h3>
+
+<blockquote><ul>
+<li><p>Follow the install guide above, and refer to step #5 and #6</p></li>
+<li><p><code>/opt/git/plexWatch/plexWatch.pl</code> <strong>or</strong> <code>/opt/git/plexWatch/plexWatch.pl --notify</code></p></li>
+</ul>
+</blockquote>
+
+<h3>Getting a list of watched shows</h3>
+
+<blockquote><ul>
+<li>This will only work for shows this has already notified on.</li>
+</ul>
+</blockquote>
+
+<h4>list all watched shows - no limit</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Anytime through Now
+</span><span class='line'>
+</span><span class='line'>User: jimbo
+</span><span class='line'> Wed Jun 26 15:56:09 2013: jimbo watched: South Park - A Nightmare on FaceTime [duration: 22 minutes, and 15 seconds]
+</span><span class='line'> Wed Jun 26 20:18:34 2013: jimbo watched: The Following - Whips and Regret [duration: 46 minutes, and 45 seconds]
+</span><span class='line'> Wed Jun 26 20:55:02 2013: jimbo watched: The Following - The Curse [duration: 46 minutes, and 15 seconds]
+</span><span class='line'>
+</span><span class='line'>User: carrie
+</span><span class='line'> Wed Jun 24 08:55:02 2013: carrie watched: The Following - The Curse [duration: 46 minutes, and 25 seconds]
+</span><span class='line'> Wed Jun 26 20:19:48 2013: carrie watched: Dumb and Dumber [1994] [PG-13] [duration: 1 hour, 7 minutes, and 10 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows - limit by TODAY only</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched --start=today --start=tomorrow</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=today &#8211;start=tomorrow</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Fri Jun 28 00:00:00 2013 through Sat Jun 29 00:00:00 2013
+</span><span class='line'>
+</span><span class='line'>User: jimbo
+</span><span class='line'> Fri Jun 28 09:18:22 2013: jimbo watched: Married ... with Children - Mr. Empty Pants [duration: 1 hour, 23 minutes, and 20 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows - limit by a start and stop date</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched --start="2 days ago" --stop="1 day ago"</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2 days ago&#8221; &#8211;stop=&#8221;1 day ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Fri Jun 26 00:00:00 2013 through Thu Jun 27 00:00:00 2013
+</span><span class='line'>
+</span><span class='line'>User: Jimbo
+</span><span class='line'> Wed Jun 26 15:56:09 2013: rarflix watched: South Park - A Nightmare on FaceTime [duration: 22 minutes, and 15 seconds]
+</span><span class='line'> Wed Jun 26 20:18:34 2013: rarflix watched: The Following - Whips and Regret [duration: 46 minutes, and 45 seconds]
+</span><span class='line'> Wed Jun 26 20:55:02 2013: rarflix watched: The Following - The Curse [duration: 46 minutes, and 15 seconds]
+</span><span class='line'>
+</span><span class='line'>User: Carrie
+</span><span class='line'> Wed Jun 26 20:19:48 2013: Carrie watched: Dumb and Dumber [1994] [PG-13] [duration: 1 hour, 7 minutes, and 10 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows: option -nogrouping vs default</h4>
+
+<blockquote><ul>
+<li>&#8211;nogrouping
+<code>/opt/git/plexWatch/plexWatch.pl --watched --start="2013-06-30" --stop="2013-06-30 at midnight" --nogrouping</code></li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2013-06-30&#8221; &#8211;stop=&#8221;2013-06-30 at midnight&#8221; &#8211;nogrouping</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>   Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 27 minutes and 54 seconds]
+</span><span class='line'>   Sun Jun 30 15:41:02 2013: exampleUser watched: Your Highness [2011] [R] [duration: 4 minutes and 59 seconds]
+</span><span class='line'>   Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 24 minutes and 17 seconds]
+</span><span class='line'>   Sun Jun 30 17:48:01 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 1 hour, 44 minutes, and 1 second]
+</span><span class='line'>   Sun Jun 30 19:45:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour and 24 minutes]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><ul>
+<li>without &#8211;nogrouping [default]
+<code>/opt/git/plexWatch/plexWatch.pl --watched --start="2013-06-30" --stop="2013-06-30 at midnight"</code></li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2013-06-30&#8221; &#8211;stop=&#8221;2013-06-30 at midnight&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>  Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'>  Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>&#8211;stats (users total watched time and total per day)</h4>
+
+<p><code>./plexWatch.pl --watched --stats --user frank --start="3 days ago"</code></p>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>* Limiting results to frank
+</span><span class='line'>
+</span><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Sat Jun 29 00:00:00 2013 through Now
+</span><span class='line'>
+</span><span class='line'>User: frank
+</span><span class='line'> Sat Jun 29 08:19:02 2013: frank watched: Lockout [2012] [PG-13] [duration: 1 hour, 38 minutes, and 59 seconds]
+</span><span class='line'> Sat Jun 29 10:02:01 2013: frank watched: Stand Up Guys [2012] [R] [duration: 1 hour and 30 minutes]
+</span><span class='line'> Sat Jun 29 11:33:01 2013: frank watched: Brave [2012] [PG] [duration: 1 hour and 24 minutes]
+</span><span class='line'> Sat Jun 29 12:58:01 2013: frank watched: The Last Stand [2013] [R] [duration: 1 hour and 39 minutes]
+</span><span class='line'> Sat Jun 29 14:38:03 2013: frank watched: Shaquille O&#39;Neal Presents: All Star Comedy Jam: Live from South Beach [2009] [] [duration: 24 minutes and 58 seconds]
+</span><span class='line'> Sat Jun 29 15:08:01 2013: frank watched: Dredd [2012] [R] [duration: 1 hour, 29 minutes, and 55 seconds]
+</span><span class='line'> Sat Jun 29 16:43:01 2013: frank watched: Billabong Odyssey [2003] [PG] [duration: 1 hour, 15 minutes, and 1 second]
+</span><span class='line'> Sat Jun 29 18:00:01 2013: frank watched: The Bridge [2006] [R] [duration: 47 minutes]
+</span><span class='line'> Sat Jun 29 18:57:01 2013: frank watched: Snitch [2013] [PG-13] [duration: 2 hours and 27 minutes]
+</span><span class='line'> Sat Jun 29 21:26:01 2013: frank watched: The Host [2013] [PG-13] [duration: 2 hours and 8 minutes]
+</span><span class='line'> Sat Jun 29 23:35:02 2013: frank watched: Jim Gaffigan: Mr. Universe [2012] [NR] [duration: 57 minutes and 59 seconds]
+</span><span class='line'> Sun Jun 30 07:15:02 2013: frank watched: A Good Day to Die Hard [2013] [R] [duration: 1 hour, 31 minutes, and 59 seconds]
+</span><span class='line'> Sun Jun 30 15:12:01 2013: frank watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'> Sun Jun 30 15:46:02 2013: frank watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span><span class='line'> Sun Jun 30 21:10:01 2013: frank watched: Judge Dredd [1995] [R] [duration: 1 hour, 41 minutes, and 1 second]
+</span><span class='line'> Mon Jul  1 20:53:02 2013: frank watched: Sinister [2012] [R] [duration: 1 hour, 44 minutes, and 59 seconds]
+</span><span class='line'> Mon Jul  1 22:40:01 2013: frank watched: Surviving the Holidays with Lewis Black [2009] [PG] [duration: 3 minutes]
+</span><span class='line'> Mon Jul  1 22:46:01 2013: frank watched: MegaMind [2010] [PG] [duration: 1 hour and 36 minutes]
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>======================================== Stats ========================================
+</span><span class='line'>user: frank&#39;s total duration 1 day, 2 hours, 24 minutes, and 2 seconds
+</span><span class='line'> Sat Jun 29 2013: frank 15 hours, 41 minutes, and 52 seconds
+</span><span class='line'> Sun Jun 30 2013: frank 7 hours, 18 minutes, and 11 seconds
+</span><span class='line'> Mon Jul  1 2013: frank 3 hours, 23 minutes, and 59 seconds
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>&#8211;user ( limit output to one user )</h4>
+
+<blockquote><ul>
+<li>works with &#8211;watched ( example above ).</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>./plexWatch.pl --watched --stats --user frank --start=&quot;3 days ago&quot;
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<br/>
+
+
+<hr />
+
+<h1>Help</h1>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>/opt/plexWatch/plexWatch.pl --help
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>PLEXWATCH(1)          User Contributed Perl Documentation         PLEXWATCH(1)
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>NAME
+</span><span class='line'>       plexWatch.pl - Notify and Log ’Now Playing’ content from a Plex Media Server
+</span><span class='line'>
+</span><span class='line'>SYNOPSIS
+</span><span class='line'>       plexWatch.pl [options]
+</span><span class='line'>
+</span><span class='line'>         Options:
+</span><span class='line'>          -notify=...        Notify any content watched and or stopped [this is default with NO options given]
+</span><span class='line'>
+</span><span class='line'>          -watched=...       print watched content
+</span><span class='line'>               -start=...         limit watched status output to content started AFTER/ON said date/time
+</span><span class='line'>               -stop=...          limit watched status output to content started BEFORE/ON said date/time
+</span><span class='line'>               -nogrouping        will show same title multiple times if user has watched/resumed title on the same day
+</span><span class='line'>
+</span><span class='line'>          -watching=...      print content being watched
+</span><span class='line'>
+</span><span class='line'>          -show_xml=...      show xml result from api query
+</span><span class='line'>          -debug=...         hit and miss - not very useful
+</span><span class='line'>
+</span><span class='line'>OPTIONS
+</span><span class='line'>       -notify        This will send you a notification through prowl and/or pushover. It will also log the event to a file and to the database.
+</span><span class='line'>                      This is the default if no options are given.
+</span><span class='line'>
+</span><span class='line'>       -watched       Print a list of watched content from all users.
+</span><span class='line'>
+</span><span class='line'>       -start         * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      limit watched status output to content started AFTER said date/time
+</span><span class='line'>
+</span><span class='line'>                      Valid options: dates, times and even fuzzy human times. Make sure you quote an values with spaces.
+</span><span class='line'>
+</span><span class='line'>                         -start=2013-06-29
+</span><span class='line'>                         -start=&quot;2013-06-29 8:00pm&quot;
+</span><span class='line'>                         -start=&quot;today&quot;
+</span><span class='line'>                         -start=&quot;today at 8:30pm&quot;
+</span><span class='line'>                         -start=&quot;last week&quot;
+</span><span class='line'>                         -start=... give it a try and see what you can use :)
+</span><span class='line'>
+</span><span class='line'>       -stop          * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      limit watched status output to content started BEFORE said date/time
+</span><span class='line'>
+</span><span class='line'>                      Valid options: dates, times and even fuzzy human times. Make sure you quote an values with spaces.
+</span><span class='line'>
+</span><span class='line'>                         -stop=2013-06-29
+</span><span class='line'>                         -stop=&quot;2013-06-29 8:00pm&quot;
+</span><span class='line'>                         -stop=&quot;today&quot;
+</span><span class='line'>                         -stop=&quot;today at 8:30pm&quot;
+</span><span class='line'>                         -stop=&quot;last week&quot;
+</span><span class='line'>                         -stop=... give it a try and see what you can use :)
+</span><span class='line'>
+</span><span class='line'>       -nogrouping    * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      will show same title multiple times if user has watched/resumed title on the same day
+</span><span class='line'>
+</span><span class='line'>                      with --nogrouping
+</span><span class='line'>                       Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 27 minutes and 54 seconds]
+</span><span class='line'>                       Sun Jun 30 15:41:02 2013: exampleUser watched: Your Highness [2011] [R] [duration: 4 minutes and 59 seconds]
+</span><span class='line'>                       Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 24 minutes and 17 seconds]
+</span><span class='line'>                       Sun Jun 30 17:48:01 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 1 hour, 44 minutes, and 1 second]
+</span><span class='line'>                       Sun Jun 30 19:45:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour and 24 minutes]
+</span><span class='line'>
+</span><span class='line'>                      without --nogrouping [default]
+</span><span class='line'>                       Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'>                       Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span><span class='line'>
+</span><span class='line'>       -watching      Print a list of content currently being watched
+</span><span class='line'>
+</span><span class='line'>       -show_xml      Print the XML result from query to the PMS server in regards to what is being watched. Could be useful for troubleshooting..
+</span><span class='line'>
+</span><span class='line'>       -debug         This can be used. I have not fully set everything for debugging.. so it’s not very useful
+</span><span class='line'>
+</span><span class='line'>DESCRIPTION
+</span><span class='line'>       This program will Notify and Log ’Now Playing’ content from a Plex
+</span><span class='line'>       Media Server
+</span><span class='line'>
+</span><span class='line'>HELP
+</span><span class='line'>       nothing to see here.
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>perl v5.10.1                      2013-06-28                      PLEXWATCH(1)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Idea, thanks to <a href="https://github.com/vwieczorek/plexMon">https://github.com/vwieczorek/plexMon</a>. I initially had a really horrible script used to parse the log files&#8230;  http://IP:PORT/status/sessions is much more useful. <del>This was whipped up in an hour or two..</del> I am sure it could use some more work.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Rob Reed</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-02T01:33:00-07:00" pubdate data-updated="true">Jul 2<span>nd</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2013/07/02/plexwatch/" data-via="" data-counturl="http://ljunkie.github.io/blog/2013/07/02/plexwatch/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/06/20/replace-wget-with-axel/" title="Previous Post: Replace wget with axel">&laquo; Replace wget with axel</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ljunkie.github.io/blog/2013/07/02/plexwatch/';
+        var disqus_url = 'http://ljunkie.github.io/blog/2013/07/02/plexwatch/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

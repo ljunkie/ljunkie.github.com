@@ -1,0 +1,623 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>FreeRADIUS Proxy - Filter Radius Attributes - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="Version Requires 2.x
+freeradius2-2.1.12-5.el5 1
+2
+3
+4
+5
+6
+7
+8
+#centos 5.x (must specify freeradius2 otherwrite 1.1.x will be installed)
+yum install &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">FreeRADIUS Proxy - Filter Radius Attributes</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T18:18:00-07:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>Version</h1>
+
+<blockquote><ul>
+<li>Requires 2.x</li>
+<li>freeradius2-2.1.12-5.el5</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#centos 5.x (must specify freeradius2 otherwrite 1.1.x will be installed)</span>
+</span><span class='line'>yum install freeradius2 freeradius2-utils
+</span><span class='line'>
+</span><span class='line'><span class="c">#centos 6.x (2.x branch is default)</span>
+</span><span class='line'>yum install freeradius freeradius-utils
+</span><span class='line'>
+</span><span class='line'><span class="c"># ubuntu</span>
+</span><span class='line'>apt-get install freeradius freeradius-utils
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Reason</h1>
+
+<blockquote><ul>
+<li>To allow an offsite vendor control of radius, but limit their ability to supply bad radius attribuites.</li>
+<li>MAIN issue: &#8221;&#8217;Protect your network&#8221;&#8217; from disallowing the vendor to supply a misconfigured &#8221;&#8217;FRAMED-IP-ADDRESS&#8221;&#8217; and/or &#8221;&#8217;FRAMED-ROUTE&#8221;&#8217; that could be injected into OSPF or whatever routing protocol you might use.</li>
+</ul>
+</blockquote>
+
+<p>This is accomplished with the <strong><em>rlm_attr_filter</em></strong> <a href="http://freeradius.org/radiusd/man/rlm_attr_filter.html">FreeRADIUS Module</a></p>
+
+<p><code>The rlm_attr_filter module exists for filtering certain attributes and values in received ( or transmitted ) radius packets. It gives the server a flexible framework to filter the attributes we send to or receive from home servers or NASes. This makes sense, for example, in an out-sourced dialup situation to various policy decisions, such as restricting a client to certain ranges of Idle-Timeout or Session-Timeout.</code></p>
+
+<h1>Config files</h1>
+
+<blockquote><ul>
+<li>Vendor Name: &#8221;&#8217;rarforge.com&#8221;&#8217;   (we&#8217;ll use that for the realm)</li>
+<li>Allowed Framed-IP-Address: &#8221;&#8217;10.0.0.x&#8221;&#8217; and &#8221;&#8217;192.168.5.x&#8221;&#8217;</li>
+<li>Allowed Framed-Netmask: &#8221;&#8217;255.255.255.255&#8221;&#8217;</li>
+<li>Allowed Framed-Route: &#8221;&#8217;NONE&#8221;&#8217;</li>
+<li>Framed-Filter-ID: &#8221;&#8217;NONE&#8221;&#8217; &#8211; login will fail if access-list doesn&#8217;t exist.</li>
+</ul>
+</blockquote>
+
+<h5>/etc/raddb/clients.conf</h5>
+
+<blockquote><ul>
+<li>Update your clients secret - for now we will just be testing from localhost.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/clients.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>client localhost {
+</span><span class='line'>...
+</span><span class='line'>secret = badsecret
+</span><span class='line'>...
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<h5>/etc/raddb/radiusd.conf</h5>
+
+<blockquote><ul>
+<li>Listen on 21000 for auth</li>
+<li>Listen on 21001 for acct</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/radiusd.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>### realm rarforge.com
+</span><span class='line'>listen {
+</span><span class='line'>        ipaddr = *
+</span><span class='line'>        port = 21000
+</span><span class='line'>        type = auth
+</span><span class='line'>}
+</span><span class='line'>listen {
+</span><span class='line'>        ipaddr = *
+</span><span class='line'>        port = 21001
+</span><span class='line'>        type = acct
+</span><span class='line'>}
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/attrs</h5>
+
+<blockquote><ul>
+<li>This is where we remove/disallow radius attributes from the vendor sent to the client</li>
+<li>make sure to keep a close eye on your comments in the config. Remove them if you have parsing errors. Last rule must not end with a comma.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/attrs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>rarforge.com
+</span><span class='line'>        Service-Type =* ANY,
+</span><span class='line'>        Login-Service =* ANY,
+</span><span class='line'>        Login-TCP-Port =* ANY,
+</span><span class='line'>        Framed-Protocol =* ANY,
+</span><span class='line'>        Framed-Compression =* ANY,
+</span><span class='line'>        Framed-MTU =* ANY,
+</span><span class='line'>        Reply-Message =* ANY,
+</span><span class='line'>        Proxy-State =* ANY,
+</span><span class='line'>        Session-Timeout =* ANY,
+</span><span class='line'>        Port-Limit =* ANY,
+</span><span class='line'>        Idle-Timeout =* ANY,
+</span><span class='line'>############ DENY BELOW ####################
+</span><span class='line'># ; comments must begin with &#39;#&#39;-- NO SPACE
+</span><span class='line'>#       ; ONLY ALLOW 10.0.0.x and 192.168.5.X
+</span><span class='line'>        Framed-IP-Address =~ &quot;10\.0\.0\.|192\.168\.5\.&quot;,
+</span><span class='line'>#       ; /32 ONLY
+</span><span class='line'>        Framed-IP-Netmask == 255.255.255.255,
+</span><span class='line'>#
+</span><span class='line'>#       ; LAST
+</span><span class='line'>        Framed-Filter-ID !* ANY
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/proxy.conf</h5>
+
+<blockquote><ul>
+<li>enable the realm (rarforge.com) to be proxied to the vendors radius auth/acct server</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/proxy.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>realm rarforge.com {
+</span><span class='line'>        type            = radius
+</span><span class='line'>        authhost        = vendor_radius_auth_ip:1645
+</span><span class='line'>        accthost        = vendor_radius_acct_ip:1646
+</span><span class='line'>        secret          = &lt;radius secret&gt;
+</span><span class='line'>}
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/sites-enabled/default</h5>
+
+<blockquote><ul>
+<li>set realm to rarforge.com based on the Destination Port auth/acct port (21000/210001)</li>
+<li>This is optional if you require users to be user@realm. In my case, we had users authing with a realm.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/sites-enabled/default</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>authorize {
+</span><span class='line'> ## rarforge realm
+</span><span class='line'> if (Packet-Dst-Port == &quot;21000&quot;) {
+</span><span class='line'>  update control {
+</span><span class='line'>    Proxy-To-Realm := &quot;rarforge.com&quot;
+</span><span class='line'>    }
+</span><span class='line'> }
+</span><span class='line'> if (Packet-Dst-Port == &quot;21001&quot;) {
+</span><span class='line'>  update control {
+</span><span class='line'>    Proxy-To-Realm := &quot;rarforge.com&quot;
+</span><span class='line'>    }
+</span><span class='line'>  }
+</span><span class='line'> ...
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<hr />
+
+<br/>
+
+
+<h1>Testing Proxy</h1>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>radtest username &lt;password&gt; localhost:21000 1 badsecret
+</span><span class='line'>
+</span><span class='line'>Sending Access-Request of id 85 to 127.0.0.1 port 21000
+</span><span class='line'>        User-Name <span class="o">=</span> <span class="s2">&quot;username&quot;</span>
+</span><span class='line'>        User-Password <span class="o">=</span> <span class="s2">&quot;&lt;password&gt;&quot;</span>
+</span><span class='line'>        NAS-IP-Address <span class="o">=</span> 127.0.0.1
+</span><span class='line'>        NAS-Port <span class="o">=</span> 1
+</span><span class='line'>        Message-Authenticator <span class="o">=</span> 0x00000000000000000000000000000000
+</span><span class='line'>rad_recv: Access-Accept packet from host 127.0.0.1 port 21000, <span class="nv">id</span><span class="o">=</span>85, <span class="nv">length</span><span class="o">=</span>50
+</span><span class='line'>        Framed-IP-Address <span class="o">=</span> 10.0.0.5
+</span><span class='line'>        Framed-Netmask <span class="o">=</span> 255.255.255.255
+</span><span class='line'>        Idle-Timeout <span class="o">=</span> 600
+</span><span class='line'>        Session-Timeout <span class="o">=</span> 18000
+</span><span class='line'>        Service-Type <span class="o">=</span> Framed-User
+</span><span class='line'>        Port-Limit <span class="o">=</span> 1
+</span><span class='line'>
+</span><span class='line'><span class="c">## SUCCESS!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<hr />
+
+<br/>
+
+
+<h1>Troubleshooting</h1>
+
+<ul>
+<li><p>Verify with radtest you can auth from the server running freeradius to the vendors radius server. It could be firewalled, not in their client list, etc&#8230;</p></li>
+<li><p>try appending your realm to the username username@yourrealmname. Maybe the section in &#8221;&#8217;/etc/raddb/sites-enabled/default&#8221;&#8217; is not working.</p></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Rob Reed</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T18:18:00-07:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/" data-via="" data-counturl="http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/" title="Previous Post: DNS Amplification DDoS Attack - ISC BIND">&laquo; DNS Amplification DDoS Attack - ISC BIND</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/06/20/replace-wget-with-axel/" title="Next Post: Replace wget with axel">Replace wget with axel &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/';
+        var disqus_url = 'http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

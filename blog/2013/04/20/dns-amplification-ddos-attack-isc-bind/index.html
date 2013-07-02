@@ -1,0 +1,610 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>DNS Amplification DDoS Attack - ISC BIND - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="This example works for anyone running ISC BIND dns attack isc.org any query I normally do not work with windows too much, but being on call this &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">DNS Amplification DDoS Attack - ISC BIND</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-20T18:17:00-07:00" pubdate data-updated="true">Apr 20<span>th</span>, 2013</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><strong> This example works for anyone running ISC BIND </strong></p>
+
+<p><strong> dns attack isc.org any query </strong></p>
+
+<p>I normally do not work with windows too much, but being on call this week I ended up having to fix a problem on a Windows 2008 server. I didn&#8217;t find any documentation online, so I figured I&#8217;d add this post.</p>
+
+<p>For anyone running <strong>Parallels Plesk</strong> (unknown version, but I know our web admin always keeps these up to date) make sure you lock down your ISC BIND instance. If not, you will probably run into a DNS amplification attack which will cause <strong>named.exe</strong> to used ALL your memory and probably even crash.</p>
+
+<p><strong>2013-04-22 Update:</strong> Plesk was set to only allow <strong><em>localnets</em></strong> recursion, however the built in <strong><em>localnets</em></strong> acl seems to be broken.</p>
+
+<p><code>
+"localnets" - matches all the IP address(es) and subnetmasks of the server on which BIND is running. For example, if the server has a single interface with an IP address of 192.168.2.3 and a netmask of 255.255.255.0 (or 192.168.2.2/24) then localnets will match 192.168.2.0 to 192.168.2.255 and 127.0.0.1 (the loopback is always present and has a single address, that is a netmask of 255.255.255.255). Some systems do not provide a way to determine the prefix lengths of local IPv6 addresses. In such a case, localnets only matches the local IP addresses, just like localhost though in this case it will apply to external and internal (same host) requests.
+</code></p>
+
+<p><strong>Are you affected?</strong></p>
+
+<p><strong>tcpdump:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.121351 IP x.x.x.x.19135 &gt; x.x.x.x.53: 10809+ [1au] ANY? isc.org. (36)</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>bind logs:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.643 client x.x.x.x#49046: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.644 client x.x.x.x#25135: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.645 client x.x.x.x#19771: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.646 client x.x.x.x#44031: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.647 client x.x.x.x#31518: query: isc.org IN ANY +ED (x.x.x.x)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p><strong>test with dig:</strong></p>
+
+<figure class='code'><figcaption><span>NOTE: x.x.x.x is YOUR dns server ip</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dig ANY isc.org @x.x.x.x +edns<span class="o">=</span>0
+</span><span class='line'>
+</span><span class='line'>; &lt;&lt;&gt;&gt; DiG 9.8.1-P1 &lt;&lt;&gt;&gt; ANY isc.org @x.x.x.x +edns<span class="o">=</span>0
+</span><span class='line'>;; global options: +cmd
+</span><span class='line'>;; Got answer:
+</span><span class='line'>;; -&gt;&gt;HEADER<span class="s">&lt;&lt;- opco</span>de: QUERY, status: NOERROR, id: 8809
+</span><span class='line'>;; flags: qr rd ra; QUERY: 1, ANSWER: 30, AUTHORITY: 4, ADDITIONAL: 13
+</span><span class='line'>
+</span><span class='line'>;; OPT PSEUDOSECTION:
+</span><span class='line'>; EDNS: version: 0, flags:; udp: 4096
+</span><span class='line'>;; QUESTION SECTION:
+</span><span class='line'>;isc.org.                       IN      ANY
+</span><span class='line'>
+</span><span class='line'>;; ANSWER SECTION:
+</span><span class='line'>isc.org.                300     IN      RRSIG   SPF 5 2 7200 20130515233253 20130415233253 50012 isc.org. rxkc3Rv5XIuARc+jiKh2DQIc3osweF+a7Db1OA8bbaEPfVW6eje0CrWM 1+D9gU0ghbNp4On4G4jfClcWTpefqhcGIzODMIwKXlGDcp1Y4t7f1Xt8 sAt0iDj7k4qoUOXEtcLoo3fhi0/HfjmJojNmNfzRuIy0q4VBPLvXDzY1 <span class="nv">wio</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      SPF     <span class="s2">&quot;v=spf1 a mx ip4:204.152.184.0/21 ip4:149.20.0.0/16 ip6:2001:04F8::0/32 ip6:2001:500:60::65/128 ~all&quot;</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   DNSKEY 5 2 7200 20130515230132 20130415230132 12892 isc.org. By1JLKWH4p/NijvP7TO40IkAokI2o5w2tZlw1d92Iv7chSKkhnBlS0jh Hpo5IySLsr3yYmKnb5rv/lIMhlPVF5TUC3+ToY7hz6aouS5P4JYA1bIB SZlzxS5HAAPl3UddF4cwf5Dp3JON3E6VIzA588PMjUBD666A27JRNqut EbHI2WxnZBR9inxwDnEf5JPagEYgNMlADottLSa3PKxwtmWUS3OLZaOo 4+wMgbL+bqTI5h5y6IpOipz3rUWurFbYteTIy5RjC+uaLcazEM94G41Z YoXQP+LodcZTqiYnfbT0Cp3ahr3n+Kx3OHLglW/V5GoqyTDFjRrHtObc <span class="nv">j1dA5A</span><span class="o">==</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   DNSKEY 5 2 7200 20130515230132 20130415230132 50012 isc.org. GRdD8E7BJR+sD7V0MkBzWKeonk97axGU7sinBrc6szaons7LY1TWyn3T 5cllz850C6o5dlK22zykRjrwCI6wiuJVzuJbyAOjrwM3TtEjFv7ePAaK ad3VGofZeb0klGEtvG9L/5rMkF2bbAwxeFGuD7SPz1gsGKDurmbCQ8YD <span class="nv">diw</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      DNSKEY  257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMVFu2hWLDMvoOMRXjGr hhCeFvAZih7yJHf8ZGfW6hd38hXG/xylYCO6Krpbdojwx8YMXLA5/kA+ u50WIL8ZR1R6KTbsYVMf/Qx5RiNbPClw+vT+U8eXEJmO20jIS1ULgqy3 47cBB1zMnnz/4LJpA0da9CbKj3A254T515sNIMcwsB8/2+2E63/zZrQz Bkj0BrN/9Bexjpiks3jRhZatEsXn3dTy47R09Uix5WcJt+xzqZ7+ysyL KOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA8lVUgEf/rzeC/bB yBNsO70aEFTd
+</span><span class='line'>isc.org.                300     IN      DNSKEY  256 3 5 BQEAAAABwuHz9Cem0BJ0JQTO7C/a3McR6hMaufljs1dfG/inaJpYv7vH XTrAOm/MeKp+/x6eT4QLru0KoZkvZJnqTI8JyaFTw2OM/ItBfh/hL2lm Cft2O7n3MfeqYtvjPnY7dWghYW4sVfH7VVEGm958o9nfi79532Qeklxh <span class="nv">x8pXWdeAaRU</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   NSEC 5 2 3600 20130515233253 20130415233253 50012 isc.org. oBP67HE1s2DNfMZ7z/MR6aY2Ujhq7PNY4eMuw6Y+i+qXbUbQ48T2O6Kj ATc9heRYWryRFQNj/JXvhDZvB4/4WsdgGqy7GdbNtBM5tSTKyp+/omc2 Bzg2y70TQgwoXyMnqCTUh/L5OAvLO8kk0xY1mbDSiv7l+gSAqQws876R <span class="nv">zmI</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      NSEC    _adsp._domainkey.isc.org. A NS SOA MX TXT AAAA NAPTR RRSIG NSEC DNSKEY SPF
+</span><span class='line'>isc.org.                300     IN      RRSIG   NAPTR 5 2 7200 20130515233253 20130415233253 50012 isc.org. k+sm/1z+7Tp+cYeZL/IZHfGT4gVXG3Lto7n1bxCU34hh1DtuKYWXYra4 UdSpZ8lrFu+y4BMTVtR9eoDI2azQCbwJwU9E+btAsf7ZYRYONY7YkttZ l3iqckDHfNPb80/o25QRDX1VejYq9oSfOiKRVNjCvR9YvUMptPZJEn06 <span class="nv">iYQ</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      NAPTR   20 0 <span class="s2">&quot;S&quot;</span> <span class="s2">&quot;SIP+D2U&quot;</span> <span class="s2">&quot;&quot;</span> _sip._udp.isc.org.
+</span><span class='line'>isc.org.                300     IN      RRSIG   AAAA 5 2 7200 20130515233253 20130415233253 50012 isc.org. M3h/PV6Fq3U0g45Z3FiwG+xcsnAok2T/nJwis4x/5MCuGk1wPRj1uUI+ h8nPPXkG9fq40uWV8hd7zKvZ5mSO0sDgdFDdkZLyPtG4jv67nw7/vUwb Pm3cqxTcMCSdKpPQvFXhq4X+bWdYJoNwNHGtviimMse8fdUER6dZqhmB <span class="nv">Cqc</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      AAAA    2001:4f8:0:2::d
+</span><span class='line'>isc.org.                300     IN      RRSIG   TXT 5 2 7200 20130515233253 20130415233253 50012 isc.org. bdioDXnXaXz6+DRzq0WSEihIBcs7/5xbS7YzcEeCNdeq7c+dpD3SBNxj mG40ic0YH0ADYzXSi+MrgESZoQZmzUmBvw84FJcxtv1OHP1RYun9Scny acpx0U6SGhqvNFs4UaiJmPDYyJFaJcbGk47bQgTfbKDzDyCjhmbuEaVf <span class="nv">1fM</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      TXT     <span class="s2">&quot;v=spf1 a mx ip4:204.152.184.0/21 ip4:149.20.0.0/16 ip6:2001:04F8::0/32 ip6:2001:500:60::65/128 ~all&quot;</span>
+</span><span class='line'>isc.org.                300     IN      TXT     <span class="s2">&quot;$Id: isc.org,v 1.1793 2013-04-09 00:33:46 bind Exp $&quot;</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   MX 5 2 7200 20130515233253 20130415233253 50012 isc.org. HdmWOHdVRLEiKIgkeGAueVl5IhUVL2b8VddQwUAatNGIidhPHkSuylE4 E8+uh2qN/sTeYPI6DN7exvKvz+4i1dsO8lUXJqY2JY8JRizRb6oBPhgP wySTiM6mAfOzB6LFMy6bqb3IYiOApuToT/785I2WxzNPK0vmxGh29nH7 <span class="nv">Tsc</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      MX      10 mx.pao1.isc.org.
+</span><span class='line'>isc.org.                300     IN      MX      10 mx.ams1.isc.org.
+</span><span class='line'>isc.org.                300     IN      RRSIG   SOA 5 2 7200 20130515233253 20130415233253 50012 isc.org. Qw/kiSPp8fgeYDucYo/tJP+SuQEWMoXJM9XPAgvuUj4ek44hUxjNUo2p 1VpLXaTIUnv6WdBvgo7X8wdPJckRag56y2zJSVbrAS3PrIALj9j90pbB 55RRc0xaGNusBU27orI4acFEZCpIH8yNv7zLx1MX3cWohoCisWaQMBwB <span class="nv">Syo</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      SOA     ns-int.isc.org. hostmaster.isc.org. 2013041600 7200 3600 24796800 3600
+</span><span class='line'>isc.org.                300     IN      RRSIG   NS 5 2 7200 20130515233253 20130415233253 50012 isc.org. HUXmb89gB4pVehWRcuSkJg020gw2d8QMhTrcu1ZD7nKomXHQFupXl5vT iq5VUREGBQtnT7FEdPEJlCiJeogbAmqt3F1V5kBfdxZLe/EzYZgvSGWq sy/VHI5d+t6/EiuCjM01UXCH1+L0YAqiHox5gsWMzRW2kvjZXhRHE2+U <span class="nv">i1Q</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   A 5 2 7200 20130515233253 20130415233253 50012 isc.org. LU6oTkxGAxOlX6zGFzwW+OSOXDZOi0NbPQGnF/evVZ+4N5FUN+7uApXP cTiwiXnX41JOqCpQyb/5zkUNyrl99/g5quVeOan06gBzsJfK8EoOSrOK UwbOKoJC1uWisJvIVS9+sb729LJ3bnAOFw0SDc22KLSaFKiwuKeTCtV6 <span class="nv">Tuk</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      A       149.20.64.42
+</span><span class='line'>isc.org.                297     IN      RRSIG   DS 7 2 86400 20130508155535 20130417145535 31380 org. Fnk6ZJwwnJXTyIfgpFsax5dOeLFsEVg08GVeAgAaKiX/h2Oo4GZ/iVWu X9EAVCiL+hRCcpVsKED3Le+hzV4nazBtITsxTso3UTtWdJ49jJSRfsld 9Tp+5/Slf5dzwU4ST0d5VO4V5XN7mxTbIuAn9hpQ5ujVdZHjQYw/FkAU <span class="nv">Bek</span><span class="o">=</span>
+</span><span class='line'>isc.org.                297     IN      DS      12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D5F0EB5C777586D E18DA6B5
+</span><span class='line'>isc.org.                297     IN      DS      12892 5 1 982113D08B4C6A1D9F6AEE1E2237AEF69F3F9759
+</span><span class='line'>isc.org.                297     IN      NS      ord.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      sfba.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ams.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ns.isc.afilias-nst.info.
+</span><span class='line'>
+</span><span class='line'>;; AUTHORITY SECTION:
+</span><span class='line'>isc.org.                297     IN      NS      ams.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ord.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      sfba.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ns.isc.afilias-nst.info.
+</span><span class='line'>
+</span><span class='line'>;; ADDITIONAL SECTION:
+</span><span class='line'>mx.ams1.isc.org.        300     IN      A       199.6.1.65
+</span><span class='line'>mx.ams1.isc.org.        300     IN      AAAA    2001:500:60::65
+</span><span class='line'>mx.pao1.isc.org.        300     IN      A       149.20.64.53
+</span><span class='line'>mx.pao1.isc.org.        300     IN      AAAA    2001:4f8:0:2::2b
+</span><span class='line'>ns.isc.afilias-nst.info. 299    IN      A       199.254.63.254
+</span><span class='line'>ns.isc.afilias-nst.info. 299    IN      AAAA    2001:500:2c::254
+</span><span class='line'>ams.sns-pb.isc.org.     297     IN      A       199.6.1.30
+</span><span class='line'>ams.sns-pb.isc.org.     297     IN      AAAA    2001:500:60::30
+</span><span class='line'>ord.sns-pb.isc.org.     297     IN      A       199.6.0.30
+</span><span class='line'>ord.sns-pb.isc.org.     297     IN      AAAA    2001:500:71::30
+</span><span class='line'>sfba.sns-pb.isc.org.    297     IN      A       149.20.64.3
+</span><span class='line'>sfba.sns-pb.isc.org.    297     IN      AAAA    2001:4f8:0:2::19
+</span><span class='line'>
+</span><span class='line'>;; Query <span class="nb">time</span>: 4300 msec
+</span><span class='line'>;; SERVER: x.x.x.x#53<span class="o">(</span>x.x.x.x<span class="o">)</span>
+</span><span class='line'>;; WHEN: Sat Apr 20 18:20:04 2013
+</span><span class='line'>;; MSG SIZE  rcvd: 3628
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong> To fix this and lock down BIND  </strong> edit: C:\Parallels\Plesk\dns\etc\named.user.conf</p>
+
+<figure class='code'><figcaption><span>Disable recursion for the DNS service </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>options {
+</span><span class='line'>    recursion no;
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>ONLY Allow queries from known networks</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>options {
+</span><span class='line'>    allow-query {192.168.1.0/24;};
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Optionally, you can also use ACL&#8217;s for a <em>cleaner</em>/<em>easier</em> config</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>notice we also allow the trusted acl recursion</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>acl trusted {
+</span><span class='line'>        127.0.0.1;
+</span><span class='line'>        127.0.0.0/24;
+</span><span class='line'>        172.16.0.0/16;
+</span><span class='line'>        192.168.1.0/24;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>options {
+</span><span class='line'>    allow-recursion    {trusted; };
+</span><span class='line'>    allow-query        {trusted; };
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>2013-04-22 Update:</strong> <del>Plesk will overwrite &#8220;allow-recursion { trusted; };&#8221; with the selection you have set in the web gui dns configuration with  any, localnets or none. If you choose localnets (good choice), this feature may not work properly, so you will have to set the named.user.conf file immutable (read-only). If you do not, your changes *will revert.</del></p>
+
+<p><strong>2013-04-22 Update #2: *<em>DO NOT</em></strong> set your file read only. Plesk Panel will break.. apperently it needs read/write access just to start. <strong>How about we just disable recursion</strong>. No need for this to be used as a resursive DNS server. It only needs to serve zones it&#8217;s authority for. You can disable recursion as a whole in the web gui under DNS&#8230; hopefully this is finally over.</p>
+
+<p><strong> Now with this in place, here is the query again </strong></p>
+
+<figure class='code'><figcaption><span>notice we also allow the trusted acl recursion</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>dig ANY isc.org @x.x.x.x +edns=0
+</span><span class='line'>
+</span><span class='line'>; &lt;&lt;&gt;&gt; DiG 9.8.1-P1 &lt;&lt;&gt;&gt; ANY isc.org @x.x.x.x +edns=0
+</span><span class='line'>;; global options: +cmd
+</span><span class='line'>;; Got answer:
+</span><span class='line'>;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: REFUSED, id: 53084
+</span><span class='line'>;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+</span><span class='line'>;; WARNING: recursion requested but not available
+</span><span class='line'>
+</span><span class='line'>;; OPT PSEUDOSECTION:
+</span><span class='line'>; EDNS: version: 0, flags:; udp: 4096
+</span><span class='line'>;; QUESTION SECTION:
+</span><span class='line'>;isc.org.                       IN      ANY
+</span><span class='line'>
+</span><span class='line'>;; Query time: 50 msec
+</span><span class='line'>;; SERVER: x.x.x.x#53(x.x.x.x)
+</span><span class='line'>;; WHEN: Sat Apr 20 18:08:19 2013
+</span><span class='line'>;; MSG SIZE  rcvd: 36
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>nslookup tool&#8230; I know</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$ nslookup isc.org x.x.x.x
+</span><span class='line'>Server:         x.x.x.x
+</span><span class='line'>Address:        x.x.x.x#53
+</span><span class='line'>
+</span><span class='line'>** server can&#39;t find isc.org: REFUSED
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There you have it. You should take a look at <a href="http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack">http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack</a> if you want a more detailed break down of this attack. I have better things to do now&#8230; like have a beer.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Rob Reed</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-20T18:17:00-07:00" pubdate data-updated="true">Apr 20<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/" data-via="" data-counturl="http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/20/new-blog-and-wiki/" title="Previous Post: New blog and Wiki">&laquo; New blog and Wiki</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/" title="Next Post: FreeRADIUS Proxy - Filter Radius Attributes">FreeRADIUS Proxy - Filter Radius Attributes &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/';
+        var disqus_url = 'http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

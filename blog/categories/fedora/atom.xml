@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Fedora | Linux Junkie]]></title>
+  <link href="http://ljunkie.github.io/blog/categories/fedora/atom.xml" rel="self"/>
+  <link href="http://ljunkie.github.io/"/>
+  <updated>2013-07-02T02:08:41-07:00</updated>
+  <id>http://ljunkie.github.io/</id>
+  <author>
+    <name><![CDATA[Rob Reed]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[VMware errors &#8211; FC6 and/or 2.6.19 Kernel]]></title>
+    <link href="http://ljunkie.github.io/blog/2007/02/21/vmware-problems-in-fedora-core-6-andor-2619-kernel/"/>
+    <updated>2007-02-21T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2007/02/21/vmware-problems-in-fedora-core-6-andor-2619-kernel</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>If you are using 2.6.19 kernel, then you will notice some errors with the vmware-config.pl script. If… actually, you better be using the 2.6.19 kernel now, or whatever the latest release is as of now</p>
+
+<p><code>
+ Error runninging vmware-config.pl :  
+ /tmp/vmware-config2/vmnet-only/userif.c: In function ‘VNetCopyDatagramToUser’:  
+ /tmp/vmware-config2/vmnet-only/userif.c:629: error: ‘CHECKSUM_HW’ undeclared (first use in this function)  
+ /tmp/vmware-config2/vmnet-only/userif.c:629: error: (Each undeclared identifier is reported only once  
+ /tmp/vmware-config2/vmnet-only/userif.c:629: error: for each function it appears in.)  
+ make[2]:   [/tmp/vmware-config2/vmnet-only/userif.o] Error 1  
+ make[1]:   [\_module\_/tmp/vmware-config2/vmnet-only] Error 2  
+ make[1]: Leaving directory `/usr/src/kernels/2.6.19-1.2911.fc6′  
+ make: [vmnet.ko] Error 2  
+ make: Leaving directory `/tmp/vmware-config2/vmnet-only’  
+ Unable to build the vmnet module.
+</code></p>
+
+<p>It seems CHECKSUM_HW has been remove from 2.6.19 and replaced with CHECKSUM_PARTIAL. You can either replace any CHECKSUM_HW lines with CHECKSUM_PARTION, or you can use the patch that Robin Kearney (usefulthings.org.uk) has writtenHow to use the Patch:</p>
+
+<!-- more -->
+
+
+<p><strong>FIX</strong> – As root:</p>
+
+<ul>
+<li>cd /tmp</li>
+<li>wget http://usefulthings.org.uk/wp-content/uploads/vmnet-only-2.6.19.patch</li>
+<li>cd /usr/lib/vmware/modules/source/</li>
+<li>cp vmnet.tar vmnet.tar.orig</li>
+<li>tar xf vmnet.tar</li>
+<li>patch -p0 &lt; /tmp/vmnet-only-2.6.19.patch</li>
+<li>tar cf vmnet.tar vmnet-only</li>
+<li>vmware-config.pl (if OS is FC6, this will probably fail again)<strong><br/>
+</strong></li>
+</ul>
+
+
+<p><strong>Fedora Core 6 will most likely have another error we need to fix:</strong></p>
+
+<p><code>
+ Using 2.6.x kernel build system.  
+ make: Entering directory `/tmp/vmware-config1/vmnet-only’  
+ make -C /lib/modules/2.6.19-1.2911.fc6/build/include/.. SUBDIRS=$PWD SRCROOT=$PWD/. modules  
+ make[1]: Entering directory `/usr/src/kernels/2.6.19-1.2911.fc6-i686′  
+ CC [M] /tmp/vmware-config1/vmnet-only/driver.o  
+ CC [M] /tmp/vmware-config1/vmnet-only/hub.o  
+ CC [M] /tmp/vmware-config1/vmnet-only/userif.o  
+ CC [M] /tmp/vmware-config1/vmnet-only/netif.o  
+ CC [M] /tmp/vmware-config1/vmnet-only/bridge.o  
+ CC [M] /tmp/vmware-config1/vmnet-only/procfs.o  
+ /tmp/vmware-config1/vmnet-only/procfs.c:33:26: error: linux/config.h: No such file or directory  
+ make[2]: \***| [/tmp/vmware-config1/vmnet-only/procfs.o] Error 1  
+ make[1]: \***| [\_module\_/tmp/vmware-config1/vmnet-only] Error 2  
+ make[1]: Leaving directory `/usr/src/kernels/2.6.19-1.2911.fc6-i686′  
+ make: \***| [vmnet.ko] Error 2  
+ make: Leaving directory `/tmp/vmware-config1/vmnet-only’  
+ Unable to build the vmnet module.
+</code></p>
+
+<p><strong>FIX</strong> – as root:</p>
+
+<ul>
+<li>cd /usr/src/kernels/2.6.19-1.2911.fc6-i686/include/linux (or whatever kernel version you are using)</li>
+<li>touch config.h</li>
+<li>vmware-config.pl (should actually complete this time)</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Secure FTP (ProFTPD with TLS)]]></title>
+    <link href="http://ljunkie.github.io/blog/2006/09/01/secure-ftp-proftpd-with-tls/"/>
+    <updated>2006-09-01T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2006/09/01/secure-ftp-proftpd-with-tls</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>I always wondered how hard it might be to get ftp running with encryption (preferably proFTPd since that has always been my choice ftp server).</p>
+
+<p>I did realize how easy it was. Of course again this documentation really only refers to Fedora Core 5. I am sure you can take this info and put it towards any other linux os.</p>
+
+<p><strong>proFTPd TLS extremely mini howto</strong></p>
+
+<ul>
+<li>edit /etc/proftpd.conf<br/>
+<code>
+ ## Add the Following lines.. or uncomment them# TLS  
+ # Explained at http://www.castaglia.org/proftpd/modules/mod_tls.html  
+ TLSEngine on  
+ TLSRequired on  
+ TLSRSACertificateFile /etc/pki/tls/certs/proftpd.pem  
+ TLSRSACertificateKeyFile /etc/pki/tls/certs/proftpd-key.pem  
+ TLSCipherSuite ALL:!ADH:!DES  
+ TLSOptions NoCertRequest  
+ TLSVerifyClient off  
+ TLSLog /var/log/proftpd/tls.log
+</code></li>
+</ul>
+
+
+<!-- more -->
+
+
+<ul>
+<li><p>Create the proftp.pem and proftpd-key.pem files<br/>
+<code>  
+  ## Run this command as root  
+ openssl req -new -x509 -days 365 -nodes -out /etc/pki/tls/certs/proftpd.pem -keyout /etc/pki/tls/certs/proftpd-key.pem
+</code></p></li>
+<li><p>Start the proFTPd service<br/>
+<code>
+ ## Run the command as root  
+ service restart proftpd
+</code></p></li>
+</ul>
+
+
+<p>Continue below if your FTP server is behind a firewall or is part of a NAT</p>
+
+<p><strong> Use the IP Nat Helper module </strong></p>
+
+<p>/etc/sysconfig/iptables-config
+<code>diff
+-IPTABLES_MODULES=""
++IPTABLES_MODULES="ip_nat_ftp"
+</code></p>
+
+<p><strong> OLD way </strong></p>
+
+<ul>
+<li>Allow passive ftp to work… need to specify what passive ports to use<br/>
+<code>
+  edit /etc/proftpd.conf  
+  ## Add the line below  
+  PassivePorts 60000 60500
+</code></li>
+<li>Add the Passive ports through your firewall<br/>
+<code>
+  edit /etc/sysconfig/iptables  
+  ## Add the line below (may need some changing to fit the format)  
+  -A RH-Firewall-1-INPUT -p tcp -m tcp –dport 60000:60050 -j ACCEPT
+</code></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

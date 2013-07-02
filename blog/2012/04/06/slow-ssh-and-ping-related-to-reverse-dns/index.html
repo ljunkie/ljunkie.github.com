@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Slow SSH and PING related to Reverse DNS - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="info: : slow ssh authentication, pings slow/timeout when using fqdn issue: SSH just sits here for a while when trying to connect. 1
+2
+3
+strace ssh &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Slow SSH and PING Related to Reverse DNS</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-06T00:00:00-07:00" pubdate data-updated="true">Apr 6<span>th</span>, 2012</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1></h1>
+
+<p><strong> info: </strong>: slow ssh authentication, pings slow/timeout when using fqdn</p>
+
+<p><strong> issue: </strong>  SSH just sits here for a while when trying to connect.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>strace ssh myhostname ...
+</span><span class='line'>write<span class="o">(</span>5, <span class="s2">&quot;RESOLVE-ADDRESS 192.168.1.1n&quot;</span>, 27<span class="o">)</span> <span class="o">=</span> 27
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Reason:</strong> mdns listed in nsswitch.conf doesn’t allow reverse dns to return failure immeditately when DNS lookup return NXDOMAIN.</p>
+
+<p><strong>Resolution:</strong>  modify  /etc/nsswitch.conf</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gd">- hosts:          files mdns4_minimal [NOTFOUND=return] dns mdns4</span>
+</span><span class='line'>  hosts: files mdns4_minimal [NOTFOUND=return] dns [NOTFOUND=return] mdns4
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">rob</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-06T00:00:00-07:00" pubdate data-updated="true">Apr 6<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>Linux</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/" data-via="" data-counturl="http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/" title="Previous Post: XBMC Nightly PPA for Ubuntu">&laquo; XBMC Nightly PPA for Ubuntu</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/" title="Next Post: Linux and the Intel Centrino Wireless-N 1030">Linux and the Intel Centrino Wireless-N 1030 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/';
+        var disqus_url = 'http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

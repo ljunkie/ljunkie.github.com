@@ -1,0 +1,469 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Ubuntu 10.04 Lucid 5.1 HDMI Audio (Intel G45) &#8211; Boxee 5.1 HDMI Audio - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="First of all. This is for a Asus P5Q-EM motherboard with Intel G45 onboard. This doc could work for others, but of course I have no clue! You can &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Ubuntu 10.04 Lucid 5.1 HDMI Audio (Intel G45) &#8211; Boxee 5.1 HDMI Audio</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-18T00:00:00-07:00" pubdate data-updated="true">Oct 18<span>th</span>, 2010</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1></h1>
+
+<p>First of all. This is for a Asus P5Q-EM motherboard with Intel G45 onboard. This doc could work for others, but of course I have no clue!</p>
+
+<p>You can verify the hardware first by running :  <a href="http://alsa.opensrc.org/index.php/Speaker-test" title="aplay -l">aplay -l</a></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> aplay -l
+</span><span class='line'>**** List of PLAYBACK Hardware Devices ****
+</span><span class='line'>card 0: Intel [HDA Intel], device 0: ALC1200 Analog [ALC1200 Analog]
+</span><span class='line'>Subdevices: 1/1
+</span><span class='line'>Subdevice #0: subdevice #0
+</span><span class='line'>card 0: Intel [HDA Intel], device 1: ALC1200 Digital [ALC1200 Digital]
+</span><span class='line'>Subdevices: 1/1
+</span><span class='line'>Subdevice #0: subdevice #0
+</span><span class='line'>card 0: Intel [HDA Intel], device 3: INTEL HDMI 0 [INTEL HDMI 0]
+</span><span class='line'>Subdevices: 0/1
+</span><span class='line'>Subdevice #0: subdevice #0</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p>You’ll notice card 0 device 3 is the Intel HDMI Audio.. If you don’t have the Intel, look for HDMI and figure out the card and device id for the HDMI out.</p>
+
+<p>A way to test the audio from the card is available by running this speaker-test on the console.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>speaker-test -Dhdmi:Intel -c6 -twavq</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If that doesn’t work, maybe you don’ thave the intel card, so the -D would not work for your. You can try (replace 0,3 with whatever card,device you have from the output above).</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>speaker-test -Dhw:0,3 -c6 -twavq</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>The Howto Start for getting 5.1 HDMI Audio in Ubuntu 10.04</h3>
+
+<p>1) Remove  PULSEAUDIO (replace with ALSA)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get purge pulseaudio gstreamer0.10-pulseaudio</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get autoremove
+</span><span class='line'>sudo apt-get install alsa-base alsa-tools alsa-tools-gui alsa-utils alsa-oss linux-sound-base alsamixergui
+</span><span class='line'>sudo apt-get install esound esound-clients esound-common gnome-alsamixer</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2) Reboot</p>
+
+<p>3) Set default audio card (HDMI)  *this step I don’t think does much.. but I did it and my system works… so why not</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gstreamer-properties</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) THE MOST IMPORTANT STEP.! This will set the HDMI out as the default card so Boxee will work properly with your audio</p>
+
+<p>Create an ~/.asoundrc file for the user you login with when you run Boxee</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ cat &gt; ~/.asoundrc
+</span><span class='line'>
+</span><span class='line'>#START
+</span><span class='line'>pcm.dmixer {
+</span><span class='line'>type dmix
+</span><span class='line'>ipc_key 1024
+</span><span class='line'>ipc_key_add_uid false
+</span><span class='line'>ipc_perm 0660
+</span><span class='line'>slave  {
+</span><span class='line'>pcm "hw:0,3"
+</span><span class='line'>rate 48000
+</span><span class='line'>channels 2
+</span><span class='line'>format S32_LE
+</span><span class='line'>period_time 0
+</span><span class='line'>period_size 1024
+</span><span class='line'>buffer_time 0
+</span><span class='line'>buffer_size 4096
+</span><span class='line'>}
+</span><span class='line'>}
+</span><span class='line'>pcm.!default {
+</span><span class='line'>type plug
+</span><span class='line'>slave.pcm "dmixer"
+</span><span class='line'>}
+</span><span class='line'># END</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>ctrl-d</code> to end the cat</li>
+</ul>
+
+
+<p>5) Disable HARDWARE Acceleration for Video. Otherwise <a href="http://www.boxee.tv/" title="Boxee">Boxee</a> will just crash on any local video playback.</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li>go to – settings -> media -> advanced</li>
+<li>uncheck — ‘enable hardware assisited decoding when possible’</li>
+<li>Render Method: Software (or Auto might work)</li>
+</ul>
+
+
+<p>6) Sound Config Setup</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li><p>go to – settings -> system -> Audio Hardware</p></li>
+<li><p>Audio Output: Digital</p></li>
+<li>DTS Capable Reciever: checked</li>
+<li>Dolby Digital (AC3) Reciever: checked</li>
+<li>Audio output device: default</li>
+<li>Passthrough output device: default`</li>
+<li>Downmix multichannel audio to stereo: UNCHECK</li>
+</ul>
+
+
+<p>** NOTE: I will post how to get <a href="http://www.boxee.tv/" title="Boxee">BOXEE </a>installed soon since that was also a pain in the ass with 10.04 release.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">rob</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-10-18T00:00:00-07:00" pubdate data-updated="true">Oct 18<span>th</span>, 2010</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>Linux</a>, <a class='category' href='/blog/categories/ubuntu/'>Ubuntu</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio/" data-via="" data-counturl="http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2007/02/21/vmware-problems-in-fedora-core-6-andor-2619-kernel/" title="Previous Post: VMware errors &#8211; FC6 and/or 2.6.19 Kernel">&laquo; VMware errors &#8211; FC6 and/or 2.6.19 Kernel</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2010/11/24/repace-vino-with-x11vnc-on-login/" title="Next Post: Repace VINO with x11vnc on Login">Repace VINO with x11vnc on Login &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

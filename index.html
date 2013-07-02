@@ -1,0 +1,1049 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="Download: github.com/ljunkie/plexWatch
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WIKI: rarforge.com/w/index.php/PlexWatch
+& &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/07/02/plexwatch/">plexWatch - Push Notification and History for PMS Watched Status</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-02T01:33:00-07:00" pubdate data-updated="true">Jul 2<span>nd</span>, 2013</time>
+        
+         | <a href="/blog/2013/07/02/plexwatch/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><blockquote><ul>
+<li><strong>Download</strong>: <a href="https://github.com/ljunkie/plexWatch">github.com/ljunkie/plexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>WIKI</strong>: <a href="https://rarforge.com/w/index.php/PlexWatch">rarforge.com/w/index.php/PlexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Forum</strong>: <a href="http://forums.plexapp.com/index.php/topic/72552-plexwatch-plex-notify-script-send-push-alerts-on-new-sessions-and-stopped/">forums.plexapp.com</a></li>
+</ul>
+</blockquote>
+
+<p><strong>Notify</strong> and Log <strong>Now Playing</strong> content from a Plex Media Server</p>
+
+<p><strong>Suported Push Notifications</strong></p>
+
+<blockquote><ul>
+<li><a href="https://pushover.net">https://pushover.net</a> (not fully tested - want to gift me the app for iOS/android?)</li>
+<li><a href="https://prowlapp.com">https://prowlapp.com</a> (tested)</li>
+</ul>
+</blockquote>
+
+<p><strong>What it does</strong></p>
+
+<blockquote><ul>
+<li>Checks if a video has been started or stopped - log and notify</li>
+<li>Notifies via prowl, pushover and/or a log file</li>
+<li>backed by a sqlite DB (for state and history)</li>
+<li>cli to view history and stats</li>
+</ul>
+</blockquote>
+
+<h2>Perl Requirements</h2>
+
+<blockquote><ul>
+<li>LWP::UserAgent</li>
+<li>WWW::Curl::Easy</li>
+<li>XML::Simple</li>
+<li>DBI</li>
+<li>Time::Duration;</li>
+<li>Time::ParseDate;</li>
+<li>Pod::Usage;       (perl base on rhel/centos)</li>
+<li>Fcntl qw(:flock); (perl base)</li>
+<li>Getopt::Long;     (perl base)</li>
+</ul>
+</blockquote>
+
+<h2>Install</h2>
+
+<p>1) <code>sudo wget -P /opt/plexWatch/ https://raw.github.com/ljunkie/plexWatch/master/plexWatch.pl</code></p>
+
+<p>2) <code>sudo chmod 755 /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>3) <code>sudo nano /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>&#8221;Modify Variables as needed&#8221;:</p>
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$server = &#39;localhost&#39;;   ## IP of PMS - or localhost
+</span><span class='line'>$port   = 32400;         ## port of PMS
+</span><span class='line'>$notify_started = 1;   ## notify when a stream is started (first play)
+</span><span class='line'>$notify_stopped = 1;   ## notify when a stream is stopped
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>## Give a user a more friendly name. I.E. REAL_USER will now be Frank
+</span><span class='line'>## OPTIONAL
+</span><span class='line'>my $user_display = {&#39;REAL_USER1&#39; =&gt; &#39;Frank&#39;,
+</span><span class='line'>                    &#39;REAL_USER2&#39; =&gt; &#39;Carrie&#39;,
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$notify = {...
+</span><span class='line'>
+</span><span class='line'>* to enable a provider, i.e. file, prowl, pushover
+</span><span class='line'>   set &#39;enabled&#39; =&gt; 1, under selected provider
+</span><span class='line'>
+</span><span class='line'>* Prowl: required you fill in &#39;apikey&#39;
+</span><span class='line'>* PushOver: required to fill in &#39;token&#39; and &#39;user&#39;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) Install Perl requirements</p>
+
+<ul>
+<li><strong>Debian/Ubuntu</strong> - apt-get</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>apt-get</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>sudo apt-get install libwww-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libwww-curl-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libxml-simple-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-duration-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-modules-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libdbd-sqlite3-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install perl-doc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>RHEL/Centos</strong> - yum</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>yum</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>yum -y install perl\(LWP::UserAgent\) perl\(WWW::Curl::Easy\) perl\(XML::Simple\) \
+</span><span class='line'>               perl\(DBI\) perl\(Time::Duration\)  perl\(Time::ParseDate\)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>5) <strong>run</strong> the script manually to verify it works: <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<blockquote><ul>
+<li>start video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<ul>
+<li>stop video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p></blockquote>
+
+<p>6) sudo nano /etc/crontab</p>
+
+<figure class='code'><figcaption><span>/etc/crontab</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>* * * * * root cd /opt/plexWatch &amp;&amp; /opt/plexWatch/plexWatch.pl
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/07/02/plexwatch/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/06/20/replace-wget-with-axel/">Replace Wget With Axel</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-20T10:22:00-07:00" pubdate data-updated="true">Jun 20<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/06/20/replace-wget-with-axel/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I have been using wget for ages without ever questioning it. Today I had to install FC18 on a dedicated server, so I found the link over at <a href="http://fedoraproject.org/en/get-fedora-options#formats">http://fedoraproject.org/en/get-fedora-options#formats</a>. The url for FC18 is http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso. The FQDN download.fedoraproject.org is a CNAME pointing wildcard.fedoraproject.org which in turns resolved to other random IPs. Sometimes the IP you will get is not always the <em>best</em> possible connection, so your download speeds will vary. We can help fix this issue with axel using more download threads.</p>
+
+<h2>wget vs. axel</h2>
+
+<ul>
+<li><strong>wget</strong> - Downloads <strong>~1MB/s</strong></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'>0% [                                      ] 4,243,464   1.24MB/s  eta 58m 39
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>axel</strong> - Downloads <strong>~40MB/s</strong> with 10 connections (<strong>-n 10</strong>)</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Starting download
+</span><span class='line'> [  0%]  .......... .......... .......... .......... ..........  [14556.7KB/s]
+</span><span class='line'> ...
+</span><span class='line'> ...
+</span><span class='line'> [ 99%]  .......... .......... .......... .......... ..........  [42171.2KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... .......... ..........  [42160.6KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... ........
+</span><span class='line'>
+</span><span class='line'>Downloaded 4362.0 megabytes in 1:45 seconds. (42157.83 KB/s)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/06/20/replace-wget-with-axel/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-23T18:18:00-07:00" pubdate data-updated="true">Apr 23<span>rd</span>, 2013</time>
+        
+         | <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Version</h1>
+
+<blockquote><ul>
+<li>Requires 2.x</li>
+<li>freeradius2-2.1.12-5.el5</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#centos 5.x (must specify freeradius2 otherwrite 1.1.x will be installed)</span>
+</span><span class='line'>yum install freeradius2 freeradius2-utils
+</span><span class='line'>
+</span><span class='line'><span class="c">#centos 6.x (2.x branch is default)</span>
+</span><span class='line'>yum install freeradius freeradius-utils
+</span><span class='line'>
+</span><span class='line'><span class="c"># ubuntu</span>
+</span><span class='line'>apt-get install freeradius freeradius-utils
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Reason</h1>
+
+<blockquote><ul>
+<li>To allow an offsite vendor control of radius, but limit their ability to supply bad radius attribuites.</li>
+<li>MAIN issue: &#8221;&#8217;Protect your network&#8221;&#8217; from disallowing the vendor to supply a misconfigured &#8221;&#8217;FRAMED-IP-ADDRESS&#8221;&#8217; and/or &#8221;&#8217;FRAMED-ROUTE&#8221;&#8217; that could be injected into OSPF or whatever routing protocol you might use.</li>
+</ul>
+</blockquote>
+
+<p>This is accomplished with the <strong><em>rlm_attr_filter</em></strong> <a href="http://freeradius.org/radiusd/man/rlm_attr_filter.html">FreeRADIUS Module</a></p>
+
+<p><code>The rlm_attr_filter module exists for filtering certain attributes and values in received ( or transmitted ) radius packets. It gives the server a flexible framework to filter the attributes we send to or receive from home servers or NASes. This makes sense, for example, in an out-sourced dialup situation to various policy decisions, such as restricting a client to certain ranges of Idle-Timeout or Session-Timeout.</code></p>
+
+<h1>Config files</h1>
+
+<blockquote><ul>
+<li>Vendor Name: &#8221;&#8217;rarforge.com&#8221;&#8217;   (we&#8217;ll use that for the realm)</li>
+<li>Allowed Framed-IP-Address: &#8221;&#8217;10.0.0.x&#8221;&#8217; and &#8221;&#8217;192.168.5.x&#8221;&#8217;</li>
+<li>Allowed Framed-Netmask: &#8221;&#8217;255.255.255.255&#8221;&#8217;</li>
+<li>Allowed Framed-Route: &#8221;&#8217;NONE&#8221;&#8217;</li>
+<li>Framed-Filter-ID: &#8221;&#8217;NONE&#8221;&#8217; &#8211; login will fail if access-list doesn&#8217;t exist.</li>
+</ul>
+</blockquote>
+
+<h5>/etc/raddb/clients.conf</h5>
+
+<blockquote><ul>
+<li>Update your clients secret - for now we will just be testing from localhost.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/clients.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>client localhost {
+</span><span class='line'>...
+</span><span class='line'>secret = badsecret
+</span><span class='line'>...
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-20T18:17:00-07:00" pubdate data-updated="true">Apr 20<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><strong> This example works for anyone running ISC BIND </strong></p>
+
+<p><strong> dns attack isc.org any query </strong></p>
+
+<p>I normally do not work with windows too much, but being on call this week I ended up having to fix a problem on a Windows 2008 server. I didn&#8217;t find any documentation online, so I figured I&#8217;d add this post.</p>
+
+<p>For anyone running <strong>Parallels Plesk</strong> (unknown version, but I know our web admin always keeps these up to date) make sure you lock down your ISC BIND instance. If not, you will probably run into a DNS amplification attack which will cause <strong>named.exe</strong> to used ALL your memory and probably even crash.</p>
+
+<p><strong>2013-04-22 Update:</strong> Plesk was set to only allow <strong><em>localnets</em></strong> recursion, however the built in <strong><em>localnets</em></strong> acl seems to be broken.</p>
+
+<p><code>
+"localnets" - matches all the IP address(es) and subnetmasks of the server on which BIND is running. For example, if the server has a single interface with an IP address of 192.168.2.3 and a netmask of 255.255.255.0 (or 192.168.2.2/24) then localnets will match 192.168.2.0 to 192.168.2.255 and 127.0.0.1 (the loopback is always present and has a single address, that is a netmask of 255.255.255.255). Some systems do not provide a way to determine the prefix lengths of local IPv6 addresses. In such a case, localnets only matches the local IP addresses, just like localhost though in this case it will apply to external and internal (same host) requests.
+</code></p>
+
+<p><strong>Are you affected?</strong></p>
+
+<p><strong>tcpdump:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.121351 IP x.x.x.x.19135 &gt; x.x.x.x.53: 10809+ [1au] ANY? isc.org. (36)</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>bind logs:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.643 client x.x.x.x#49046: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.644 client x.x.x.x#25135: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.645 client x.x.x.x#19771: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.646 client x.x.x.x#44031: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.647 client x.x.x.x#31518: query: isc.org IN ANY +ED (x.x.x.x)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/20/new-blog-and-wiki/">New Blog and Wiki</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-20T13:34:00-07:00" pubdate data-updated="true">Apr 20<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/04/20/new-blog-and-wiki/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I finally gave up on <a href="http://wordpress.org">wordpress</a> and switched to <a href="http://ocotopress.org">octopress</a>. I wanted something <strong><em>simple</em></strong> and <strong><em>clean</em></strong>. There are so many other reasons, but it&#8217;s the weekend and I don&#8217;t feel like <em>working</em>.</p>
+
+<p>I also rolled out a <a href="//w.rarforge.com">wiki</a> recently which I started to use a month ago. It will probably have more detailed information about the posts here.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; Lightdm</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-26T00:00:00-07:00" pubdate data-updated="true">Sep 26<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1></h1>
+
+<p><strong>Some of the errors I ran into</strong></p>
+
+<blockquote><ul>
+<li>DISPLAY is not set</li>
+<li>Failed to allocate internet-domain X11 display socket</li>
+<li>X11 forwarding request failed on channel 0</li>
+</ul>
+</blockquote>
+
+<p>1) <strong>Make sure you have the X11forwarding enabled.</strong></p>
+
+<p>Server: <strong>/etc/ssh/sshd_config</strong></p>
+
+<figure class='code'><figcaption><span>/etc/ssh/sshd_config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>X11Forwarding yes
+</span><span class='line'>X11DisplayOffset 10
+</span><span class='line'>AllowTcpForwarding yes`
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/16/ssh-add-on-demand/">Ssh-add on Demand</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-16T00:00:00-07:00" pubdate data-updated="true">Apr 16<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/04/16/ssh-add-on-demand/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1></h1>
+
+<p><strong>Solution</strong>: bash alias - <code>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"</code></p>
+
+<p>Normally one would put this in their ~/.bash_profile. However with Ubuntu 11.10, at least with my install,~/.bash_profile is not included. The file to add this line to is:</p>
+
+<p><strong>~/.bash_aliases</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) && ssh"</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>More Info:</strong>
+Ubuntu does state if ~/.bash_profile does exists, then ~/.profile will not be read, so I am using what has been setup to work by default.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/04/16/ssh-add-on-demand/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-11T00:00:00-07:00" pubdate data-updated="true">Apr 11<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1></h1>
+
+<p>These changes are stilled needed as of Linux 3.0.0-17. The driver in use is iwlagn and I have seen other posts using the iwlwifi driver (untested).</p>
+
+<p><strong>Turn off Power Managment for wireless</strong><br/>
+Info: This should already be off when using AC, however we will want to turn this feature off for battery use.</p>
+
+<p>To check you status run the command below and look for Power Management<br/>
+- check this output on <strong>AC</strong> and <strong>Battery</strong> to verify it’s <strong>off</strong>.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING Related to Reverse DNS</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-06T00:00:00-07:00" pubdate data-updated="true">Apr 6<span>th</span>, 2012</time>
+        
+         | <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1></h1>
+
+<p><strong> info: </strong>: slow ssh authentication, pings slow/timeout when using fqdn</p>
+
+<p><strong> issue: </strong>  SSH just sits here for a while when trying to connect.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>strace ssh myhostname ...
+</span><span class='line'>write<span class="o">(</span>5, <span class="s2">&quot;RESOLVE-ADDRESS 192.168.1.1n&quot;</span>, 27<span class="o">)</span> <span class="o">=</span> 27
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Reason:</strong> mdns listed in nsswitch.conf doesn’t allow reverse dns to return failure immeditately when DNS lookup return NXDOMAIN.</p>
+
+<p><strong>Resolution:</strong>  modify  /etc/nsswitch.conf</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gd">- hosts:          files mdns4_minimal [NOTFOUND=return] dns mdns4</span>
+</span><span class='line'>  hosts: files mdns4_minimal [NOTFOUND=return] dns [NOTFOUND=return] mdns4
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-11-24T00:00:00-08:00" pubdate data-updated="true">Nov 24<span>th</span>, 2011</time>
+        
+         | <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1></h1>
+
+<p>Here is a good XBMC stable and unstable/nightly PPA for Ubuntu 11.04 or 11.10</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-stable</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-nightly</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/2/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I&#8217;m married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>

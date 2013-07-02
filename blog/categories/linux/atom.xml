@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Linux | Linux Junkie]]></title>
+  <link href="http://ljunkie.github.io/blog/categories/linux/atom.xml" rel="self"/>
+  <link href="http://ljunkie.github.io/"/>
+  <updated>2013-07-02T02:08:41-07:00</updated>
+  <id>http://ljunkie.github.io/</id>
+  <author>
+    <name><![CDATA[Rob Reed]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[X11forwarding via SSH &#8211; Ubuntu &#038; lightdm]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/"/>
+    <updated>2012-09-26T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Some of the errors I ran into</strong></p>
+
+<blockquote><ul>
+<li>DISPLAY is not set</li>
+<li>Failed to allocate internet-domain X11 display socket</li>
+<li>X11 forwarding request failed on channel 0</li>
+</ul>
+</blockquote>
+
+<p>1) <strong>Make sure you have the X11forwarding enabled.</strong></p>
+
+<p>Server: <strong>/etc/ssh/sshd_config</strong><br/>
+<code>text /etc/ssh/sshd_config
+X11Forwarding yes
+X11DisplayOffset 10
+AllowTcpForwarding yes`  
+</code></p>
+
+<!-- more -->
+
+
+<p>Client: <strong>/etc/ssh/ssh_config</strong><br/>
+<code>
+ForwardX11 yes
+ForwardX11Trusted yes
+</code></p>
+
+<p>2) <strong>Enable lightdm to listen on TCP sockets</strong></p>
+
+<p>Modify and add line below to: <strong>/etc/lightdm/lightdm.conf</strong><br/>
+<code>
+xserver-allow-tcp=true
+</code></p>
+
+<p>3) <strong>If you have disabled IPv6</strong>, one more update to sshd_config is needed<br/>
+Modify and add line below to: <strong>/etc/ssh/sshd_config</strong><br/>
+<code>
+AddressFamily inet
+</code></p>
+
+<p>4) <strong>Restart lightdm and sshd – or – Reboot</strong></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ssh-add on demand]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand/"/>
+    <updated>2012-04-16T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Solution</strong>: bash alias - <code>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"</code></p>
+
+<p>Normally one would put this in their ~/.bash_profile. However with Ubuntu 11.10, at least with my install,~/.bash_profile is not included. The file to add this line to is:</p>
+
+<p><strong>~/.bash_aliases</strong>
+<code>
+alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"
+</code></p>
+
+<p><strong>More Info:</strong>
+Ubuntu does state if ~/.bash_profile does exists, then ~/.profile will not be read, so I am using what has been setup to work by default.</p>
+
+<!-- more -->
+
+
+<p>```</p>
+
+<h1>cat ~/.profile</h1>
+
+<h1>~/.profile: executed by the command interpreter for login shells.</h1>
+
+<h1>This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login</h1>
+
+<h1>exists.</h1>
+
+<p>...
+if [ -n "$BASH_VERSION" ]; then</p>
+
+<pre><code># include .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+</code></pre>
+
+<p>fi
+...
+```</p>
+
+<p>~/.profile is set to include ~/.bash_rc which is set (at least on my system) to include ~/.bash_aliases
+```</p>
+
+<h1>cat ~/.bashrc</h1>
+
+<p>...
+if [ -f ~/.bash_aliases ]; then</p>
+
+<pre><code>. ~/.bash_aliases
+</code></pre>
+
+<p>fi
+...
+```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linux and the Intel Centrino Wireless-N 1030]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/"/>
+    <updated>2012-04-11T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>These changes are stilled needed as of Linux 3.0.0-17. The driver in use is iwlagn and I have seen other posts using the iwlwifi driver (untested).</p>
+
+<p><strong>Turn off Power Managment for wireless</strong><br/>
+Info: This should already be off when using AC, however we will want to turn this feature off for battery use.</p>
+
+<p>To check you status run the command below and look for Power Management<br/>
+- check this output on <strong>AC</strong> and <strong>Battery</strong> to verify it’s <strong>off</strong>.</p>
+
+<!-- more -->
+
+
+<p>```
+$ iwconfig wlan0
+wlan0     IEEE 802.11bg  ESSID:"------------"</p>
+
+<pre><code>      Mode:Managed  Frequency:2.462 GHz  Access Point: 00:1C:B3:AE:FF:A1
+      Bit Rate=54 Mb/s   Tx-Power=15 dBm
+      Retry  long limit:7   RTS thr:off   Fragment thr:off
+      Encryption key:off
+      Power Management:off
+      Link Quality=55/70  Signal level=-55 dBm
+      Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0
+      Tx excessive retries:0  Invalid misc:396   Missed beacon:0
+</code></pre>
+
+<p>```</p>
+
+<p><strong>To disable permanently</strong> edit (as root) edit /usr/lib/pm-utils/power.d/wireless
+```</p>
+
+<h1>/usr/lib/pm-utils/power.d/wireless</h1>
+
+<p>Change line 39 from "power on” to “power off”.
+```</p>
+
+<p><strong>Turn off Wireless-N features of the card</strong></p>
+
+<p>I know, this sounds odd since we all want our N to work, but sadly N currently does not does not work correctly under linux.</p>
+
+<p>This will unload the wifi module and load without wireless-N.</p>
+
+<p><code>bash
+sudo rmmod iwlwifi
+sudo modprobe iwlwifi 11n_disable=1`
+</code></p>
+
+<ul>
+<li>If <code>11n_disable=1</code> causes the module to not load, try changing  it to <code>11n_disable50=1</code></li>
+<li>Persistent by adding to <code>/etc/modprobe.d/iwlwifi.conf</code></li>
+</ul>
+
+
+<p><strong> Finding which Kernel Module you are using  </strong>-- iwlagn or iwlwifi --
+<code>``bash
+Info: refer to the lines "Kernel driver in use" and " Kernel modules"  
+</code>sudo lspci -v  | grep -A10 "Centrino Wireless"
+03:00.0 Network controller: Intel Corporation Centrino Wireless-N 1030 (rev 34)</p>
+
+<pre><code>    Subsystem: Intel Corporation Centrino Wireless-N 1030 BGN
+    Flags: bus master, fast devsel, latency 0, IRQ 53
+    Memory at f1b00000 (64-bit, non-prefetchable) [size=8K]
+    Capabilities: [c8] Power Management version 3
+    Capabilities: [d0] MSI: Enable  Count=1/1 Maskable- 64bit 
+    Capabilities: [e0] Express Endpoint, MSI 00
+    Capabilities: [100] Advanced Error Reporting
+    Capabilities: [140] Device Serial Number bc-77-37-ff-ff-0a-43-bc
+    Kernel driver in use: iwlagn
+    Kernel modules: iwlagn`
+</code></pre>
+
+<p>```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Slow SSH and PING related to Reverse DNS]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/"/>
+    <updated>2012-04-06T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong> info: </strong>: slow ssh authentication, pings slow/timeout when using fqdn</p>
+
+<p><strong> issue: </strong>  SSH just sits here for a while when trying to connect.
+<code>bash
+strace ssh myhostname ...
+write(5, "RESOLVE-ADDRESS 192.168.1.1n", 27) = 27
+...
+</code></p>
+
+<p><strong>Reason:</strong> mdns listed in nsswitch.conf doesn’t allow reverse dns to return failure immeditately when DNS lookup return NXDOMAIN.</p>
+
+<p><strong>Resolution:</strong>  modify  /etc/nsswitch.conf</p>
+
+<p><code>diff
+- hosts:          files mdns4_minimal [NOTFOUND=return] dns mdns4
+  hosts: files mdns4_minimal [NOTFOUND=return] dns [NOTFOUND=return] mdns4
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[XBMC Nightly PPA for Ubuntu]]></title>
+    <link href="http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/"/>
+    <updated>2011-11-24T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>Here is a good XBMC stable and unstable/nightly PPA for Ubuntu 11.04 or 11.10</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-stable</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-nightly</p>
+]]></content>
+  </entry>
+  
+</feed>

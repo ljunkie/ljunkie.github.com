@@ -1,0 +1,2115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Linux Junkie]]></title>
+  <link href="http://ljunkie.github.io/atom.xml" rel="self"/>
+  <link href="http://ljunkie.github.io/"/>
+  <updated>2013-07-02T02:08:41-07:00</updated>
+  <id>http://ljunkie.github.io/</id>
+  <author>
+    <name><![CDATA[Rob Reed]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[plexWatch - push notification and history for PMS watched status]]></title>
+    <link href="http://ljunkie.github.io/blog/2013/07/02/plexwatch/"/>
+    <updated>2013-07-02T01:33:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2013/07/02/plexwatch</id>
+    <content type="html"><![CDATA[<blockquote><ul>
+<li><strong>Download</strong>: <a href="https://github.com/ljunkie/plexWatch">github.com/ljunkie/plexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>WIKI</strong>: <a href="https://rarforge.com/w/index.php/PlexWatch">rarforge.com/w/index.php/PlexWatch</a></li>
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>Forum</strong>: <a href="http://forums.plexapp.com/index.php/topic/72552-plexwatch-plex-notify-script-send-push-alerts-on-new-sessions-and-stopped/">forums.plexapp.com</a></li>
+</ul>
+</blockquote>
+
+<p><strong>Notify</strong> and Log <strong>Now Playing</strong> content from a Plex Media Server</p>
+
+<p><strong>Suported Push Notifications</strong></p>
+
+<blockquote><ul>
+<li><a href="https://pushover.net">https://pushover.net</a> (not fully tested - want to gift me the app for iOS/android?)</li>
+<li><a href="https://prowlapp.com">https://prowlapp.com</a> (tested)</li>
+</ul>
+</blockquote>
+
+<p><strong>What it does</strong></p>
+
+<blockquote><ul>
+<li>Checks if a video has been started or stopped - log and notify</li>
+<li>Notifies via prowl, pushover and/or a log file</li>
+<li>backed by a sqlite DB (for state and history)</li>
+<li>cli to view history and stats</li>
+</ul>
+</blockquote>
+
+<h2>Perl Requirements</h2>
+
+<blockquote><ul>
+<li>LWP::UserAgent</li>
+<li>WWW::Curl::Easy</li>
+<li>XML::Simple</li>
+<li>DBI</li>
+<li>Time::Duration;</li>
+<li>Time::ParseDate;</li>
+<li>Pod::Usage;       (perl base on rhel/centos)</li>
+<li>Fcntl qw(:flock); (perl base)</li>
+<li>Getopt::Long;     (perl base)</li>
+</ul>
+</blockquote>
+
+<h2>Install</h2>
+
+<p>1) <code>sudo wget -P /opt/plexWatch/ https://raw.github.com/ljunkie/plexWatch/master/plexWatch.pl</code></p>
+
+<p>2) <code>sudo chmod 755 /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>3) <code>sudo nano /opt/plexWatch/plexWatch.pl</code></p>
+
+<p>&#8221;Modify Variables as needed&#8221;:</p>
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$server = &#39;localhost&#39;;   ## IP of PMS - or localhost
+</span><span class='line'>$port   = 32400;         ## port of PMS
+</span><span class='line'>$notify_started = 1;   ## notify when a stream is started (first play)
+</span><span class='line'>$notify_stopped = 1;   ## notify when a stream is stopped
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>## Give a user a more friendly name. I.E. REAL_USER will now be Frank
+</span><span class='line'>## OPTIONAL
+</span><span class='line'>my $user_display = {&#39;REAL_USER1&#39; =&gt; &#39;Frank&#39;,
+</span><span class='line'>                    &#39;REAL_USER2&#39; =&gt; &#39;Carrie&#39;,
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>/opt/plexWatch/plexWatch.pl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$notify = {...
+</span><span class='line'>
+</span><span class='line'>* to enable a provider, i.e. file, prowl, pushover
+</span><span class='line'>   set &#39;enabled&#39; =&gt; 1, under selected provider
+</span><span class='line'>
+</span><span class='line'>* Prowl: required you fill in &#39;apikey&#39;
+</span><span class='line'>* PushOver: required to fill in &#39;token&#39; and &#39;user&#39;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) Install Perl requirements</p>
+
+<ul>
+<li><strong>Debian/Ubuntu</strong> - apt-get</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>apt-get</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>sudo apt-get install libwww-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libwww-curl-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libxml-simple-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-duration-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libtime-modules-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install libdbd-sqlite3-perl
+</span><span class='line'>
+</span><span class='line'>sudo apt-get install perl-doc
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>RHEL/Centos</strong> - yum</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>yum</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>yum -y install perl\(LWP::UserAgent\) perl\(WWW::Curl::Easy\) perl\(XML::Simple\) \
+</span><span class='line'>               perl\(DBI\) perl\(Time::Duration\)  perl\(Time::ParseDate\)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>5) <strong>run</strong> the script manually to verify it works: <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<blockquote><ul>
+<li>start video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p>
+
+<ul>
+<li>stop video(s)</li>
+</ul>
+
+
+<p>run <code>/opt/plexWatch/plexWatch.pl</code></p></blockquote>
+
+<p>6) sudo nano /etc/crontab</p>
+
+<figure class='code'><figcaption><span>/etc/crontab</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>* * * * * root cd /opt/plexWatch &amp;&amp; /opt/plexWatch/plexWatch.pl
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<hr />
+
+<h1>Using the script</h1>
+
+<h3>Sending Notifications</h3>
+
+<blockquote><ul>
+<li><p>Follow the install guide above, and refer to step #5 and #6</p></li>
+<li><p><code>/opt/git/plexWatch/plexWatch.pl</code> <strong>or</strong> <code>/opt/git/plexWatch/plexWatch.pl --notify</code></p></li>
+</ul>
+</blockquote>
+
+<h3>Getting a list of watched shows</h3>
+
+<blockquote><ul>
+<li>This will only work for shows this has already notified on.</li>
+</ul>
+</blockquote>
+
+<h4>list all watched shows - no limit</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Anytime through Now
+</span><span class='line'>
+</span><span class='line'>User: jimbo
+</span><span class='line'> Wed Jun 26 15:56:09 2013: jimbo watched: South Park - A Nightmare on FaceTime [duration: 22 minutes, and 15 seconds]
+</span><span class='line'> Wed Jun 26 20:18:34 2013: jimbo watched: The Following - Whips and Regret [duration: 46 minutes, and 45 seconds]
+</span><span class='line'> Wed Jun 26 20:55:02 2013: jimbo watched: The Following - The Curse [duration: 46 minutes, and 15 seconds]
+</span><span class='line'>
+</span><span class='line'>User: carrie
+</span><span class='line'> Wed Jun 24 08:55:02 2013: carrie watched: The Following - The Curse [duration: 46 minutes, and 25 seconds]
+</span><span class='line'> Wed Jun 26 20:19:48 2013: carrie watched: Dumb and Dumber [1994] [PG-13] [duration: 1 hour, 7 minutes, and 10 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows - limit by TODAY only</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched --start=today --start=tomorrow</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=today &#8211;start=tomorrow</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Fri Jun 28 00:00:00 2013 through Sat Jun 29 00:00:00 2013
+</span><span class='line'>
+</span><span class='line'>User: jimbo
+</span><span class='line'> Fri Jun 28 09:18:22 2013: jimbo watched: Married ... with Children - Mr. Empty Pants [duration: 1 hour, 23 minutes, and 20 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows - limit by a start and stop date</h4>
+
+<p><code>/opt/git/plexWatch/plexWatch.pl --watched --start="2 days ago" --stop="1 day ago"</code></p>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2 days ago&#8221; &#8211;stop=&#8221;1 day ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Fri Jun 26 00:00:00 2013 through Thu Jun 27 00:00:00 2013
+</span><span class='line'>
+</span><span class='line'>User: Jimbo
+</span><span class='line'> Wed Jun 26 15:56:09 2013: rarflix watched: South Park - A Nightmare on FaceTime [duration: 22 minutes, and 15 seconds]
+</span><span class='line'> Wed Jun 26 20:18:34 2013: rarflix watched: The Following - Whips and Regret [duration: 46 minutes, and 45 seconds]
+</span><span class='line'> Wed Jun 26 20:55:02 2013: rarflix watched: The Following - The Curse [duration: 46 minutes, and 15 seconds]
+</span><span class='line'>
+</span><span class='line'>User: Carrie
+</span><span class='line'> Wed Jun 26 20:19:48 2013: Carrie watched: Dumb and Dumber [1994] [PG-13] [duration: 1 hour, 7 minutes, and 10 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>list watched shows: option -nogrouping vs default</h4>
+
+<blockquote><ul>
+<li>&#8211;nogrouping
+<code>/opt/git/plexWatch/plexWatch.pl --watched --start="2013-06-30" --stop="2013-06-30 at midnight" --nogrouping</code></li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2013-06-30&#8221; &#8211;stop=&#8221;2013-06-30 at midnight&#8221; &#8211;nogrouping</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>   Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 27 minutes and 54 seconds]
+</span><span class='line'>   Sun Jun 30 15:41:02 2013: exampleUser watched: Your Highness [2011] [R] [duration: 4 minutes and 59 seconds]
+</span><span class='line'>   Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 24 minutes and 17 seconds]
+</span><span class='line'>   Sun Jun 30 17:48:01 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 1 hour, 44 minutes, and 1 second]
+</span><span class='line'>   Sun Jun 30 19:45:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour and 24 minutes]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><ul>
+<li>without &#8211;nogrouping [default]
+<code>/opt/git/plexWatch/plexWatch.pl --watched --start="2013-06-30" --stop="2013-06-30 at midnight"</code></li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/opt/git/plexWatch/plexWatch.pl &#8211;watched &#8211;start=&#8221;2013-06-30&#8221; &#8211;stop=&#8221;2013-06-30 at midnight&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>  Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'>  Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>&#8211;stats (users total watched time and total per day)</h4>
+
+<p><code>./plexWatch.pl --watched --stats --user frank --start="3 days ago"</code></p>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>* Limiting results to frank
+</span><span class='line'>
+</span><span class='line'>======================================== Watched ========================================
+</span><span class='line'>Date Range: Sat Jun 29 00:00:00 2013 through Now
+</span><span class='line'>
+</span><span class='line'>User: frank
+</span><span class='line'> Sat Jun 29 08:19:02 2013: frank watched: Lockout [2012] [PG-13] [duration: 1 hour, 38 minutes, and 59 seconds]
+</span><span class='line'> Sat Jun 29 10:02:01 2013: frank watched: Stand Up Guys [2012] [R] [duration: 1 hour and 30 minutes]
+</span><span class='line'> Sat Jun 29 11:33:01 2013: frank watched: Brave [2012] [PG] [duration: 1 hour and 24 minutes]
+</span><span class='line'> Sat Jun 29 12:58:01 2013: frank watched: The Last Stand [2013] [R] [duration: 1 hour and 39 minutes]
+</span><span class='line'> Sat Jun 29 14:38:03 2013: frank watched: Shaquille O&#39;Neal Presents: All Star Comedy Jam: Live from South Beach [2009] [] [duration: 24 minutes and 58 seconds]
+</span><span class='line'> Sat Jun 29 15:08:01 2013: frank watched: Dredd [2012] [R] [duration: 1 hour, 29 minutes, and 55 seconds]
+</span><span class='line'> Sat Jun 29 16:43:01 2013: frank watched: Billabong Odyssey [2003] [PG] [duration: 1 hour, 15 minutes, and 1 second]
+</span><span class='line'> Sat Jun 29 18:00:01 2013: frank watched: The Bridge [2006] [R] [duration: 47 minutes]
+</span><span class='line'> Sat Jun 29 18:57:01 2013: frank watched: Snitch [2013] [PG-13] [duration: 2 hours and 27 minutes]
+</span><span class='line'> Sat Jun 29 21:26:01 2013: frank watched: The Host [2013] [PG-13] [duration: 2 hours and 8 minutes]
+</span><span class='line'> Sat Jun 29 23:35:02 2013: frank watched: Jim Gaffigan: Mr. Universe [2012] [NR] [duration: 57 minutes and 59 seconds]
+</span><span class='line'> Sun Jun 30 07:15:02 2013: frank watched: A Good Day to Die Hard [2013] [R] [duration: 1 hour, 31 minutes, and 59 seconds]
+</span><span class='line'> Sun Jun 30 15:12:01 2013: frank watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'> Sun Jun 30 15:46:02 2013: frank watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span><span class='line'> Sun Jun 30 21:10:01 2013: frank watched: Judge Dredd [1995] [R] [duration: 1 hour, 41 minutes, and 1 second]
+</span><span class='line'> Mon Jul  1 20:53:02 2013: frank watched: Sinister [2012] [R] [duration: 1 hour, 44 minutes, and 59 seconds]
+</span><span class='line'> Mon Jul  1 22:40:01 2013: frank watched: Surviving the Holidays with Lewis Black [2009] [PG] [duration: 3 minutes]
+</span><span class='line'> Mon Jul  1 22:46:01 2013: frank watched: MegaMind [2010] [PG] [duration: 1 hour and 36 minutes]
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>======================================== Stats ========================================
+</span><span class='line'>user: frank&#39;s total duration 1 day, 2 hours, 24 minutes, and 2 seconds
+</span><span class='line'> Sat Jun 29 2013: frank 15 hours, 41 minutes, and 52 seconds
+</span><span class='line'> Sun Jun 30 2013: frank 7 hours, 18 minutes, and 11 seconds
+</span><span class='line'> Mon Jul  1 2013: frank 3 hours, 23 minutes, and 59 seconds
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>&#8211;user ( limit output to one user )</h4>
+
+<blockquote><ul>
+<li>works with &#8211;watched ( example above ).</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>./plexWatch.pl --watched --stats --user frank --start=&quot;3 days ago&quot;
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<br/>
+
+
+<hr />
+
+<h1>Help</h1>
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>/opt/plexWatch/plexWatch.pl --help
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span>./plexWatch.pl &#8211;watched &#8211;stats &#8211;user frank &#8211;start=&#8221;3 days ago&#8221;</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>PLEXWATCH(1)          User Contributed Perl Documentation         PLEXWATCH(1)
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>NAME
+</span><span class='line'>       plexWatch.pl - Notify and Log ’Now Playing’ content from a Plex Media Server
+</span><span class='line'>
+</span><span class='line'>SYNOPSIS
+</span><span class='line'>       plexWatch.pl [options]
+</span><span class='line'>
+</span><span class='line'>         Options:
+</span><span class='line'>          -notify=...        Notify any content watched and or stopped [this is default with NO options given]
+</span><span class='line'>
+</span><span class='line'>          -watched=...       print watched content
+</span><span class='line'>               -start=...         limit watched status output to content started AFTER/ON said date/time
+</span><span class='line'>               -stop=...          limit watched status output to content started BEFORE/ON said date/time
+</span><span class='line'>               -nogrouping        will show same title multiple times if user has watched/resumed title on the same day
+</span><span class='line'>
+</span><span class='line'>          -watching=...      print content being watched
+</span><span class='line'>
+</span><span class='line'>          -show_xml=...      show xml result from api query
+</span><span class='line'>          -debug=...         hit and miss - not very useful
+</span><span class='line'>
+</span><span class='line'>OPTIONS
+</span><span class='line'>       -notify        This will send you a notification through prowl and/or pushover. It will also log the event to a file and to the database.
+</span><span class='line'>                      This is the default if no options are given.
+</span><span class='line'>
+</span><span class='line'>       -watched       Print a list of watched content from all users.
+</span><span class='line'>
+</span><span class='line'>       -start         * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      limit watched status output to content started AFTER said date/time
+</span><span class='line'>
+</span><span class='line'>                      Valid options: dates, times and even fuzzy human times. Make sure you quote an values with spaces.
+</span><span class='line'>
+</span><span class='line'>                         -start=2013-06-29
+</span><span class='line'>                         -start=&quot;2013-06-29 8:00pm&quot;
+</span><span class='line'>                         -start=&quot;today&quot;
+</span><span class='line'>                         -start=&quot;today at 8:30pm&quot;
+</span><span class='line'>                         -start=&quot;last week&quot;
+</span><span class='line'>                         -start=... give it a try and see what you can use :)
+</span><span class='line'>
+</span><span class='line'>       -stop          * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      limit watched status output to content started BEFORE said date/time
+</span><span class='line'>
+</span><span class='line'>                      Valid options: dates, times and even fuzzy human times. Make sure you quote an values with spaces.
+</span><span class='line'>
+</span><span class='line'>                         -stop=2013-06-29
+</span><span class='line'>                         -stop=&quot;2013-06-29 8:00pm&quot;
+</span><span class='line'>                         -stop=&quot;today&quot;
+</span><span class='line'>                         -stop=&quot;today at 8:30pm&quot;
+</span><span class='line'>                         -stop=&quot;last week&quot;
+</span><span class='line'>                         -stop=... give it a try and see what you can use :)
+</span><span class='line'>
+</span><span class='line'>       -nogrouping    * only works with -watched
+</span><span class='line'>
+</span><span class='line'>                      will show same title multiple times if user has watched/resumed title on the same day
+</span><span class='line'>
+</span><span class='line'>                      with --nogrouping
+</span><span class='line'>                       Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 27 minutes and 54 seconds]
+</span><span class='line'>                       Sun Jun 30 15:41:02 2013: exampleUser watched: Your Highness [2011] [R] [duration: 4 minutes and 59 seconds]
+</span><span class='line'>                       Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 24 minutes and 17 seconds]
+</span><span class='line'>                       Sun Jun 30 17:48:01 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 1 hour, 44 minutes, and 1 second]
+</span><span class='line'>                       Sun Jun 30 19:45:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour and 24 minutes]
+</span><span class='line'>
+</span><span class='line'>                      without --nogrouping [default]
+</span><span class='line'>                       Sun Jun 30 15:12:01 2013: exampleUser watched: Your Highness [2011] [R] [duration: 1 hour, 56 minutes, and 53 seconds]
+</span><span class='line'>                       Sun Jun 30 15:46:02 2013: exampleUser watched: Star Trek [2009] [PG-13] [duration: 2 hours, 8 minutes, and 18 seconds]
+</span><span class='line'>
+</span><span class='line'>       -watching      Print a list of content currently being watched
+</span><span class='line'>
+</span><span class='line'>       -show_xml      Print the XML result from query to the PMS server in regards to what is being watched. Could be useful for troubleshooting..
+</span><span class='line'>
+</span><span class='line'>       -debug         This can be used. I have not fully set everything for debugging.. so it’s not very useful
+</span><span class='line'>
+</span><span class='line'>DESCRIPTION
+</span><span class='line'>       This program will Notify and Log ’Now Playing’ content from a Plex
+</span><span class='line'>       Media Server
+</span><span class='line'>
+</span><span class='line'>HELP
+</span><span class='line'>       nothing to see here.
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>perl v5.10.1                      2013-06-28                      PLEXWATCH(1)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Idea, thanks to <a href="https://github.com/vwieczorek/plexMon">https://github.com/vwieczorek/plexMon</a>. I initially had a really horrible script used to parse the log files&#8230;  http://IP:PORT/status/sessions is much more useful. <del>This was whipped up in an hour or two..</del> I am sure it could use some more work.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Replace wget with axel]]></title>
+    <link href="http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel/"/>
+    <updated>2013-06-20T10:22:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel</id>
+    <content type="html"><![CDATA[<p>I have been using wget for ages without ever questioning it. Today I had to install FC18 on a dedicated server, so I found the link over at <a href="http://fedoraproject.org/en/get-fedora-options#formats">http://fedoraproject.org/en/get-fedora-options#formats</a>. The url for FC18 is http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso. The FQDN download.fedoraproject.org is a CNAME pointing wildcard.fedoraproject.org which in turns resolved to other random IPs. Sometimes the IP you will get is not always the <em>best</em> possible connection, so your download speeds will vary. We can help fix this issue with axel using more download threads.</p>
+
+<h2>wget vs. axel</h2>
+
+<ul>
+<li><strong>wget</strong> - Downloads <strong>~1MB/s</strong></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'>0% [                                      ] 4,243,464   1.24MB/s  eta 58m 39
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>axel</strong> - Downloads <strong>~40MB/s</strong> with 10 connections (<strong>-n 10</strong>)</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Starting download
+</span><span class='line'> [  0%]  .......... .......... .......... .......... ..........  [14556.7KB/s]
+</span><span class='line'> ...
+</span><span class='line'> ...
+</span><span class='line'> [ 99%]  .......... .......... .......... .......... ..........  [42171.2KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... .......... ..........  [42160.6KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... ........
+</span><span class='line'>
+</span><span class='line'>Downloaded 4362.0 megabytes in 1:45 seconds. (42157.83 KB/s)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<p><strong> Is 40 MB/s maybe too fast? Then limit it!</strong></p>
+
+<p>You can limit your speeds with -s (in bytes). I am not sure why they used bytes instead of something a little easier to short hand, but it works.</p>
+
+<ul>
+<li><strong>Axel</strong> - Limited to 10MB/s (<strong>10485760</strong> bytes)</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Starting download
+</span><span class='line'> [  0%]  .......... .......... .......... .......... ..........  [10766.6KB/s]
+</span><span class='line'> ...
+</span><span class='line'> ...
+</span><span class='line'> [  2%]  .......... .......... .......... .......... ..........  [9870.2KB/s]
+</span><span class='line'> [  2%]  .......... ........^C.. .......... .......... ..........  [9808.5KB/s]
+</span><span class='line'> [  2%]  .......... ........
+</span><span class='line'> Downloaded 71.0 megabytes in 7 seconds. (9808.50 KB/s)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>You will notice above, <strong>I killed the download with crtl-c</strong>, but that&#8217;s OK, we can easily <strong>resume</strong> it!</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso 
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso.0
+</span><span class='line'> State file found: 108204478 bytes downloaded, 4465684034 to go.
+</span><span class='line'> Starting download
+</span><span class='line'> 
+</span><span class='line'>         ,,,,,,,,,, ,,,,,,,,.. .......... .......... ..........  [ 498.3KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [ 995.1KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [1490.6KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [1984.9KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [2478.4KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [2970.3KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [10382.6KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [10278.5KB/s]
+</span><span class='line'>   </span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is also an <strong><em>alternate</em></strong> output with <strong>-a</strong> if you don&#8217;t like how verbose the output is normally.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -a -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso -s 10485760
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso.0
+</span><span class='line'> State file found: 114071526 bytes downloaded, 4459816986 to go.
+</span><span class='line'> Starting download
+</span><span class='line'> 
+</span><span class='line'> [  4%] [0    1    2     3    4    5    6    7    8    9   ] [   9.9MB/s] [06:58]^C
+</span><span class='line'> Downloaded 84.7 megabytes in 8 seconds. (10174.90 KB/s)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>installing?</h2>
+
+<ul>
+<li>Debian/Ubuntu</li>
+</ul>
+
+
+<p><code>apt-get install axel</code></p>
+
+<ul>
+<li>Redhat/Centos</li>
+</ul>
+
+
+<p><code>yum install axel</code></p>
+
+<ul>
+<li>OSX</li>
+</ul>
+
+
+<p><code>brew install axel</code></p>
+
+<h2>Source</h2>
+
+<ul>
+<li><p>main: <a href="http://axel.alioth.debian.org/">http://axel.alioth.debian.org/</a></p></li>
+<li><p>Freecode: <a href="http://freecode.com/projects/axel">http://freecode.com/projects/axel</a></p></li>
+<li><p>Fork: <a href="https://github.com/emiraga/axel">https://github.com/emiraga/axel</a></p></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[FreeRADIUS Proxy - Filter Radius Attributes]]></title>
+    <link href="http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/"/>
+    <updated>2013-04-23T18:18:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2013/04/23/freeradius-proxy-filter-radius-attributes</id>
+    <content type="html"><![CDATA[<h1>Version</h1>
+
+<blockquote><ul>
+<li>Requires 2.x</li>
+<li>freeradius2-2.1.12-5.el5</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#centos 5.x (must specify freeradius2 otherwrite 1.1.x will be installed)</span>
+</span><span class='line'>yum install freeradius2 freeradius2-utils
+</span><span class='line'>
+</span><span class='line'><span class="c">#centos 6.x (2.x branch is default)</span>
+</span><span class='line'>yum install freeradius freeradius-utils
+</span><span class='line'>
+</span><span class='line'><span class="c"># ubuntu</span>
+</span><span class='line'>apt-get install freeradius freeradius-utils
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Reason</h1>
+
+<blockquote><ul>
+<li>To allow an offsite vendor control of radius, but limit their ability to supply bad radius attribuites.</li>
+<li>MAIN issue: &#8221;&#8217;Protect your network&#8221;&#8217; from disallowing the vendor to supply a misconfigured &#8221;&#8217;FRAMED-IP-ADDRESS&#8221;&#8217; and/or &#8221;&#8217;FRAMED-ROUTE&#8221;&#8217; that could be injected into OSPF or whatever routing protocol you might use.</li>
+</ul>
+</blockquote>
+
+<p>This is accomplished with the <strong><em>rlm_attr_filter</em></strong> <a href="http://freeradius.org/radiusd/man/rlm_attr_filter.html">FreeRADIUS Module</a></p>
+
+<p><code>The rlm_attr_filter module exists for filtering certain attributes and values in received ( or transmitted ) radius packets. It gives the server a flexible framework to filter the attributes we send to or receive from home servers or NASes. This makes sense, for example, in an out-sourced dialup situation to various policy decisions, such as restricting a client to certain ranges of Idle-Timeout or Session-Timeout.</code></p>
+
+<h1>Config files</h1>
+
+<blockquote><ul>
+<li>Vendor Name: &#8221;&#8217;rarforge.com&#8221;&#8217;   (we&#8217;ll use that for the realm)</li>
+<li>Allowed Framed-IP-Address: &#8221;&#8217;10.0.0.x&#8221;&#8217; and &#8221;&#8217;192.168.5.x&#8221;&#8217;</li>
+<li>Allowed Framed-Netmask: &#8221;&#8217;255.255.255.255&#8221;&#8217;</li>
+<li>Allowed Framed-Route: &#8221;&#8217;NONE&#8221;&#8217;</li>
+<li>Framed-Filter-ID: &#8221;&#8217;NONE&#8221;&#8217; &#8211; login will fail if access-list doesn&#8217;t exist.</li>
+</ul>
+</blockquote>
+
+<h5>/etc/raddb/clients.conf</h5>
+
+<blockquote><ul>
+<li>Update your clients secret - for now we will just be testing from localhost.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/clients.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>client localhost {
+</span><span class='line'>...
+</span><span class='line'>secret = badsecret
+</span><span class='line'>...
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<h5>/etc/raddb/radiusd.conf</h5>
+
+<blockquote><ul>
+<li>Listen on 21000 for auth</li>
+<li>Listen on 21001 for acct</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/radiusd.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>### realm rarforge.com
+</span><span class='line'>listen {
+</span><span class='line'>        ipaddr = *
+</span><span class='line'>        port = 21000
+</span><span class='line'>        type = auth
+</span><span class='line'>}
+</span><span class='line'>listen {
+</span><span class='line'>        ipaddr = *
+</span><span class='line'>        port = 21001
+</span><span class='line'>        type = acct
+</span><span class='line'>}
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/attrs</h5>
+
+<blockquote><ul>
+<li>This is where we remove/disallow radius attributes from the vendor sent to the client</li>
+<li>make sure to keep a close eye on your comments in the config. Remove them if you have parsing errors. Last rule must not end with a comma.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/attrs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>rarforge.com
+</span><span class='line'>        Service-Type =* ANY,
+</span><span class='line'>        Login-Service =* ANY,
+</span><span class='line'>        Login-TCP-Port =* ANY,
+</span><span class='line'>        Framed-Protocol =* ANY,
+</span><span class='line'>        Framed-Compression =* ANY,
+</span><span class='line'>        Framed-MTU =* ANY,
+</span><span class='line'>        Reply-Message =* ANY,
+</span><span class='line'>        Proxy-State =* ANY,
+</span><span class='line'>        Session-Timeout =* ANY,
+</span><span class='line'>        Port-Limit =* ANY,
+</span><span class='line'>        Idle-Timeout =* ANY,
+</span><span class='line'>############ DENY BELOW ####################
+</span><span class='line'># ; comments must begin with &#39;#&#39;-- NO SPACE
+</span><span class='line'>#       ; ONLY ALLOW 10.0.0.x and 192.168.5.X
+</span><span class='line'>        Framed-IP-Address =~ &quot;10\.0\.0\.|192\.168\.5\.&quot;,
+</span><span class='line'>#       ; /32 ONLY
+</span><span class='line'>        Framed-IP-Netmask == 255.255.255.255,
+</span><span class='line'>#
+</span><span class='line'>#       ; LAST
+</span><span class='line'>        Framed-Filter-ID !* ANY
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/proxy.conf</h5>
+
+<blockquote><ul>
+<li>enable the realm (rarforge.com) to be proxied to the vendors radius auth/acct server</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/proxy.conf</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>realm rarforge.com {
+</span><span class='line'>        type            = radius
+</span><span class='line'>        authhost        = vendor_radius_auth_ip:1645
+</span><span class='line'>        accthost        = vendor_radius_acct_ip:1646
+</span><span class='line'>        secret          = &lt;radius secret&gt;
+</span><span class='line'>}
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>/etc/raddb/sites-enabled/default</h5>
+
+<blockquote><ul>
+<li>set realm to rarforge.com based on the Destination Port auth/acct port (21000/210001)</li>
+<li>This is optional if you require users to be user@realm. In my case, we had users authing with a realm.</li>
+</ul>
+</blockquote>
+
+<figure class='code'><figcaption><span>/etc/raddb/sites-enabled/default</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>...
+</span><span class='line'>authorize {
+</span><span class='line'> ## rarforge realm
+</span><span class='line'> if (Packet-Dst-Port == &quot;21000&quot;) {
+</span><span class='line'>  update control {
+</span><span class='line'>    Proxy-To-Realm := &quot;rarforge.com&quot;
+</span><span class='line'>    }
+</span><span class='line'> }
+</span><span class='line'> if (Packet-Dst-Port == &quot;21001&quot;) {
+</span><span class='line'>  update control {
+</span><span class='line'>    Proxy-To-Realm := &quot;rarforge.com&quot;
+</span><span class='line'>    }
+</span><span class='line'>  }
+</span><span class='line'> ...
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<hr />
+
+<br/>
+
+
+<h1>Testing Proxy</h1>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>radtest username &lt;password&gt; localhost:21000 1 badsecret
+</span><span class='line'>
+</span><span class='line'>Sending Access-Request of id 85 to 127.0.0.1 port 21000
+</span><span class='line'>        User-Name <span class="o">=</span> <span class="s2">&quot;username&quot;</span>
+</span><span class='line'>        User-Password <span class="o">=</span> <span class="s2">&quot;&lt;password&gt;&quot;</span>
+</span><span class='line'>        NAS-IP-Address <span class="o">=</span> 127.0.0.1
+</span><span class='line'>        NAS-Port <span class="o">=</span> 1
+</span><span class='line'>        Message-Authenticator <span class="o">=</span> 0x00000000000000000000000000000000
+</span><span class='line'>rad_recv: Access-Accept packet from host 127.0.0.1 port 21000, <span class="nv">id</span><span class="o">=</span>85, <span class="nv">length</span><span class="o">=</span>50
+</span><span class='line'>        Framed-IP-Address <span class="o">=</span> 10.0.0.5
+</span><span class='line'>        Framed-Netmask <span class="o">=</span> 255.255.255.255
+</span><span class='line'>        Idle-Timeout <span class="o">=</span> 600
+</span><span class='line'>        Session-Timeout <span class="o">=</span> 18000
+</span><span class='line'>        Service-Type <span class="o">=</span> Framed-User
+</span><span class='line'>        Port-Limit <span class="o">=</span> 1
+</span><span class='line'>
+</span><span class='line'><span class="c">## SUCCESS!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<br/>
+
+
+<hr />
+
+<br/>
+
+
+<h1>Troubleshooting</h1>
+
+<ul>
+<li><p>Verify with radtest you can auth from the server running freeradius to the vendors radius server. It could be firewalled, not in their client list, etc&#8230;</p></li>
+<li><p>try appending your realm to the username username@yourrealmname. Maybe the section in &#8221;&#8217;/etc/raddb/sites-enabled/default&#8221;&#8217; is not working.</p></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[DNS Amplification DDoS Attack - ISC BIND]]></title>
+    <link href="http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/"/>
+    <updated>2013-04-20T18:17:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind</id>
+    <content type="html"><![CDATA[<p><strong> This example works for anyone running ISC BIND </strong></p>
+
+<p><strong> dns attack isc.org any query </strong></p>
+
+<p>I normally do not work with windows too much, but being on call this week I ended up having to fix a problem on a Windows 2008 server. I didn&#8217;t find any documentation online, so I figured I&#8217;d add this post.</p>
+
+<p>For anyone running <strong>Parallels Plesk</strong> (unknown version, but I know our web admin always keeps these up to date) make sure you lock down your ISC BIND instance. If not, you will probably run into a DNS amplification attack which will cause <strong>named.exe</strong> to used ALL your memory and probably even crash.</p>
+
+<p><strong>2013-04-22 Update:</strong> Plesk was set to only allow <strong><em>localnets</em></strong> recursion, however the built in <strong><em>localnets</em></strong> acl seems to be broken.</p>
+
+<p><code>
+"localnets" - matches all the IP address(es) and subnetmasks of the server on which BIND is running. For example, if the server has a single interface with an IP address of 192.168.2.3 and a netmask of 255.255.255.0 (or 192.168.2.2/24) then localnets will match 192.168.2.0 to 192.168.2.255 and 127.0.0.1 (the loopback is always present and has a single address, that is a netmask of 255.255.255.255). Some systems do not provide a way to determine the prefix lengths of local IPv6 addresses. In such a case, localnets only matches the local IP addresses, just like localhost though in this case it will apply to external and internal (same host) requests.
+</code></p>
+
+<p><strong>Are you affected?</strong></p>
+
+<p><strong>tcpdump:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.121351 IP x.x.x.x.19135 &gt; x.x.x.x.53: 10809+ [1au] ANY? isc.org. (36)</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>bind logs:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>12:28:00.643 client x.x.x.x#49046: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.644 client x.x.x.x#25135: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.645 client x.x.x.x#19771: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.646 client x.x.x.x#44031: query: isc.org IN ANY +ED (x.x.x.x)
+</span><span class='line'>12:28:00.647 client x.x.x.x#31518: query: isc.org IN ANY +ED (x.x.x.x)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p><strong>test with dig:</strong></p>
+
+<figure class='code'><figcaption><span>NOTE: x.x.x.x is YOUR dns server ip</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>dig ANY isc.org @x.x.x.x +edns<span class="o">=</span>0
+</span><span class='line'>
+</span><span class='line'>; &lt;&lt;&gt;&gt; DiG 9.8.1-P1 &lt;&lt;&gt;&gt; ANY isc.org @x.x.x.x +edns<span class="o">=</span>0
+</span><span class='line'>;; global options: +cmd
+</span><span class='line'>;; Got answer:
+</span><span class='line'>;; -&gt;&gt;HEADER<span class="s">&lt;&lt;- opco</span>de: QUERY, status: NOERROR, id: 8809
+</span><span class='line'>;; flags: qr rd ra; QUERY: 1, ANSWER: 30, AUTHORITY: 4, ADDITIONAL: 13
+</span><span class='line'>
+</span><span class='line'>;; OPT PSEUDOSECTION:
+</span><span class='line'>; EDNS: version: 0, flags:; udp: 4096
+</span><span class='line'>;; QUESTION SECTION:
+</span><span class='line'>;isc.org.                       IN      ANY
+</span><span class='line'>
+</span><span class='line'>;; ANSWER SECTION:
+</span><span class='line'>isc.org.                300     IN      RRSIG   SPF 5 2 7200 20130515233253 20130415233253 50012 isc.org. rxkc3Rv5XIuARc+jiKh2DQIc3osweF+a7Db1OA8bbaEPfVW6eje0CrWM 1+D9gU0ghbNp4On4G4jfClcWTpefqhcGIzODMIwKXlGDcp1Y4t7f1Xt8 sAt0iDj7k4qoUOXEtcLoo3fhi0/HfjmJojNmNfzRuIy0q4VBPLvXDzY1 <span class="nv">wio</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      SPF     <span class="s2">&quot;v=spf1 a mx ip4:204.152.184.0/21 ip4:149.20.0.0/16 ip6:2001:04F8::0/32 ip6:2001:500:60::65/128 ~all&quot;</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   DNSKEY 5 2 7200 20130515230132 20130415230132 12892 isc.org. By1JLKWH4p/NijvP7TO40IkAokI2o5w2tZlw1d92Iv7chSKkhnBlS0jh Hpo5IySLsr3yYmKnb5rv/lIMhlPVF5TUC3+ToY7hz6aouS5P4JYA1bIB SZlzxS5HAAPl3UddF4cwf5Dp3JON3E6VIzA588PMjUBD666A27JRNqut EbHI2WxnZBR9inxwDnEf5JPagEYgNMlADottLSa3PKxwtmWUS3OLZaOo 4+wMgbL+bqTI5h5y6IpOipz3rUWurFbYteTIy5RjC+uaLcazEM94G41Z YoXQP+LodcZTqiYnfbT0Cp3ahr3n+Kx3OHLglW/V5GoqyTDFjRrHtObc <span class="nv">j1dA5A</span><span class="o">==</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   DNSKEY 5 2 7200 20130515230132 20130415230132 50012 isc.org. GRdD8E7BJR+sD7V0MkBzWKeonk97axGU7sinBrc6szaons7LY1TWyn3T 5cllz850C6o5dlK22zykRjrwCI6wiuJVzuJbyAOjrwM3TtEjFv7ePAaK ad3VGofZeb0klGEtvG9L/5rMkF2bbAwxeFGuD7SPz1gsGKDurmbCQ8YD <span class="nv">diw</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      DNSKEY  257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMVFu2hWLDMvoOMRXjGr hhCeFvAZih7yJHf8ZGfW6hd38hXG/xylYCO6Krpbdojwx8YMXLA5/kA+ u50WIL8ZR1R6KTbsYVMf/Qx5RiNbPClw+vT+U8eXEJmO20jIS1ULgqy3 47cBB1zMnnz/4LJpA0da9CbKj3A254T515sNIMcwsB8/2+2E63/zZrQz Bkj0BrN/9Bexjpiks3jRhZatEsXn3dTy47R09Uix5WcJt+xzqZ7+ysyL KOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA8lVUgEf/rzeC/bB yBNsO70aEFTd
+</span><span class='line'>isc.org.                300     IN      DNSKEY  256 3 5 BQEAAAABwuHz9Cem0BJ0JQTO7C/a3McR6hMaufljs1dfG/inaJpYv7vH XTrAOm/MeKp+/x6eT4QLru0KoZkvZJnqTI8JyaFTw2OM/ItBfh/hL2lm Cft2O7n3MfeqYtvjPnY7dWghYW4sVfH7VVEGm958o9nfi79532Qeklxh <span class="nv">x8pXWdeAaRU</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   NSEC 5 2 3600 20130515233253 20130415233253 50012 isc.org. oBP67HE1s2DNfMZ7z/MR6aY2Ujhq7PNY4eMuw6Y+i+qXbUbQ48T2O6Kj ATc9heRYWryRFQNj/JXvhDZvB4/4WsdgGqy7GdbNtBM5tSTKyp+/omc2 Bzg2y70TQgwoXyMnqCTUh/L5OAvLO8kk0xY1mbDSiv7l+gSAqQws876R <span class="nv">zmI</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      NSEC    _adsp._domainkey.isc.org. A NS SOA MX TXT AAAA NAPTR RRSIG NSEC DNSKEY SPF
+</span><span class='line'>isc.org.                300     IN      RRSIG   NAPTR 5 2 7200 20130515233253 20130415233253 50012 isc.org. k+sm/1z+7Tp+cYeZL/IZHfGT4gVXG3Lto7n1bxCU34hh1DtuKYWXYra4 UdSpZ8lrFu+y4BMTVtR9eoDI2azQCbwJwU9E+btAsf7ZYRYONY7YkttZ l3iqckDHfNPb80/o25QRDX1VejYq9oSfOiKRVNjCvR9YvUMptPZJEn06 <span class="nv">iYQ</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      NAPTR   20 0 <span class="s2">&quot;S&quot;</span> <span class="s2">&quot;SIP+D2U&quot;</span> <span class="s2">&quot;&quot;</span> _sip._udp.isc.org.
+</span><span class='line'>isc.org.                300     IN      RRSIG   AAAA 5 2 7200 20130515233253 20130415233253 50012 isc.org. M3h/PV6Fq3U0g45Z3FiwG+xcsnAok2T/nJwis4x/5MCuGk1wPRj1uUI+ h8nPPXkG9fq40uWV8hd7zKvZ5mSO0sDgdFDdkZLyPtG4jv67nw7/vUwb Pm3cqxTcMCSdKpPQvFXhq4X+bWdYJoNwNHGtviimMse8fdUER6dZqhmB <span class="nv">Cqc</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      AAAA    2001:4f8:0:2::d
+</span><span class='line'>isc.org.                300     IN      RRSIG   TXT 5 2 7200 20130515233253 20130415233253 50012 isc.org. bdioDXnXaXz6+DRzq0WSEihIBcs7/5xbS7YzcEeCNdeq7c+dpD3SBNxj mG40ic0YH0ADYzXSi+MrgESZoQZmzUmBvw84FJcxtv1OHP1RYun9Scny acpx0U6SGhqvNFs4UaiJmPDYyJFaJcbGk47bQgTfbKDzDyCjhmbuEaVf <span class="nv">1fM</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      TXT     <span class="s2">&quot;v=spf1 a mx ip4:204.152.184.0/21 ip4:149.20.0.0/16 ip6:2001:04F8::0/32 ip6:2001:500:60::65/128 ~all&quot;</span>
+</span><span class='line'>isc.org.                300     IN      TXT     <span class="s2">&quot;$Id: isc.org,v 1.1793 2013-04-09 00:33:46 bind Exp $&quot;</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   MX 5 2 7200 20130515233253 20130415233253 50012 isc.org. HdmWOHdVRLEiKIgkeGAueVl5IhUVL2b8VddQwUAatNGIidhPHkSuylE4 E8+uh2qN/sTeYPI6DN7exvKvz+4i1dsO8lUXJqY2JY8JRizRb6oBPhgP wySTiM6mAfOzB6LFMy6bqb3IYiOApuToT/785I2WxzNPK0vmxGh29nH7 <span class="nv">Tsc</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      MX      10 mx.pao1.isc.org.
+</span><span class='line'>isc.org.                300     IN      MX      10 mx.ams1.isc.org.
+</span><span class='line'>isc.org.                300     IN      RRSIG   SOA 5 2 7200 20130515233253 20130415233253 50012 isc.org. Qw/kiSPp8fgeYDucYo/tJP+SuQEWMoXJM9XPAgvuUj4ek44hUxjNUo2p 1VpLXaTIUnv6WdBvgo7X8wdPJckRag56y2zJSVbrAS3PrIALj9j90pbB 55RRc0xaGNusBU27orI4acFEZCpIH8yNv7zLx1MX3cWohoCisWaQMBwB <span class="nv">Syo</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      SOA     ns-int.isc.org. hostmaster.isc.org. 2013041600 7200 3600 24796800 3600
+</span><span class='line'>isc.org.                300     IN      RRSIG   NS 5 2 7200 20130515233253 20130415233253 50012 isc.org. HUXmb89gB4pVehWRcuSkJg020gw2d8QMhTrcu1ZD7nKomXHQFupXl5vT iq5VUREGBQtnT7FEdPEJlCiJeogbAmqt3F1V5kBfdxZLe/EzYZgvSGWq sy/VHI5d+t6/EiuCjM01UXCH1+L0YAqiHox5gsWMzRW2kvjZXhRHE2+U <span class="nv">i1Q</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      RRSIG   A 5 2 7200 20130515233253 20130415233253 50012 isc.org. LU6oTkxGAxOlX6zGFzwW+OSOXDZOi0NbPQGnF/evVZ+4N5FUN+7uApXP cTiwiXnX41JOqCpQyb/5zkUNyrl99/g5quVeOan06gBzsJfK8EoOSrOK UwbOKoJC1uWisJvIVS9+sb729LJ3bnAOFw0SDc22KLSaFKiwuKeTCtV6 <span class="nv">Tuk</span><span class="o">=</span>
+</span><span class='line'>isc.org.                300     IN      A       149.20.64.42
+</span><span class='line'>isc.org.                297     IN      RRSIG   DS 7 2 86400 20130508155535 20130417145535 31380 org. Fnk6ZJwwnJXTyIfgpFsax5dOeLFsEVg08GVeAgAaKiX/h2Oo4GZ/iVWu X9EAVCiL+hRCcpVsKED3Le+hzV4nazBtITsxTso3UTtWdJ49jJSRfsld 9Tp+5/Slf5dzwU4ST0d5VO4V5XN7mxTbIuAn9hpQ5ujVdZHjQYw/FkAU <span class="nv">Bek</span><span class="o">=</span>
+</span><span class='line'>isc.org.                297     IN      DS      12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D5F0EB5C777586D E18DA6B5
+</span><span class='line'>isc.org.                297     IN      DS      12892 5 1 982113D08B4C6A1D9F6AEE1E2237AEF69F3F9759
+</span><span class='line'>isc.org.                297     IN      NS      ord.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      sfba.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ams.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ns.isc.afilias-nst.info.
+</span><span class='line'>
+</span><span class='line'>;; AUTHORITY SECTION:
+</span><span class='line'>isc.org.                297     IN      NS      ams.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ord.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      sfba.sns-pb.isc.org.
+</span><span class='line'>isc.org.                297     IN      NS      ns.isc.afilias-nst.info.
+</span><span class='line'>
+</span><span class='line'>;; ADDITIONAL SECTION:
+</span><span class='line'>mx.ams1.isc.org.        300     IN      A       199.6.1.65
+</span><span class='line'>mx.ams1.isc.org.        300     IN      AAAA    2001:500:60::65
+</span><span class='line'>mx.pao1.isc.org.        300     IN      A       149.20.64.53
+</span><span class='line'>mx.pao1.isc.org.        300     IN      AAAA    2001:4f8:0:2::2b
+</span><span class='line'>ns.isc.afilias-nst.info. 299    IN      A       199.254.63.254
+</span><span class='line'>ns.isc.afilias-nst.info. 299    IN      AAAA    2001:500:2c::254
+</span><span class='line'>ams.sns-pb.isc.org.     297     IN      A       199.6.1.30
+</span><span class='line'>ams.sns-pb.isc.org.     297     IN      AAAA    2001:500:60::30
+</span><span class='line'>ord.sns-pb.isc.org.     297     IN      A       199.6.0.30
+</span><span class='line'>ord.sns-pb.isc.org.     297     IN      AAAA    2001:500:71::30
+</span><span class='line'>sfba.sns-pb.isc.org.    297     IN      A       149.20.64.3
+</span><span class='line'>sfba.sns-pb.isc.org.    297     IN      AAAA    2001:4f8:0:2::19
+</span><span class='line'>
+</span><span class='line'>;; Query <span class="nb">time</span>: 4300 msec
+</span><span class='line'>;; SERVER: x.x.x.x#53<span class="o">(</span>x.x.x.x<span class="o">)</span>
+</span><span class='line'>;; WHEN: Sat Apr 20 18:20:04 2013
+</span><span class='line'>;; MSG SIZE  rcvd: 3628
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong> To fix this and lock down BIND  </strong> edit: C:\Parallels\Plesk\dns\etc\named.user.conf</p>
+
+<figure class='code'><figcaption><span>Disable recursion for the DNS service </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>options {
+</span><span class='line'>    recursion no;
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>ONLY Allow queries from known networks</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>options {
+</span><span class='line'>    allow-query {192.168.1.0/24;};
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Optionally, you can also use ACL&#8217;s for a <em>cleaner</em>/<em>easier</em> config</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>notice we also allow the trusted acl recursion</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>acl trusted {
+</span><span class='line'>        127.0.0.1;
+</span><span class='line'>        127.0.0.0/24;
+</span><span class='line'>        172.16.0.0/16;
+</span><span class='line'>        192.168.1.0/24;
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>options {
+</span><span class='line'>    allow-recursion    {trusted; };
+</span><span class='line'>    allow-query        {trusted; };
+</span><span class='line'>};
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>2013-04-22 Update:</strong> <del>Plesk will overwrite &#8220;allow-recursion { trusted; };&#8221; with the selection you have set in the web gui dns configuration with  any, localnets or none. If you choose localnets (good choice), this feature may not work properly, so you will have to set the named.user.conf file immutable (read-only). If you do not, your changes *will revert.</del></p>
+
+<p><strong>2013-04-22 Update #2: *<em>DO NOT</em></strong> set your file read only. Plesk Panel will break.. apperently it needs read/write access just to start. <strong>How about we just disable recursion</strong>. No need for this to be used as a resursive DNS server. It only needs to serve zones it&#8217;s authority for. You can disable recursion as a whole in the web gui under DNS&#8230; hopefully this is finally over.</p>
+
+<p><strong> Now with this in place, here is the query again </strong></p>
+
+<figure class='code'><figcaption><span>notice we also allow the trusted acl recursion</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>dig ANY isc.org @x.x.x.x +edns=0
+</span><span class='line'>
+</span><span class='line'>; &lt;&lt;&gt;&gt; DiG 9.8.1-P1 &lt;&lt;&gt;&gt; ANY isc.org @x.x.x.x +edns=0
+</span><span class='line'>;; global options: +cmd
+</span><span class='line'>;; Got answer:
+</span><span class='line'>;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: REFUSED, id: 53084
+</span><span class='line'>;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+</span><span class='line'>;; WARNING: recursion requested but not available
+</span><span class='line'>
+</span><span class='line'>;; OPT PSEUDOSECTION:
+</span><span class='line'>; EDNS: version: 0, flags:; udp: 4096
+</span><span class='line'>;; QUESTION SECTION:
+</span><span class='line'>;isc.org.                       IN      ANY
+</span><span class='line'>
+</span><span class='line'>;; Query time: 50 msec
+</span><span class='line'>;; SERVER: x.x.x.x#53(x.x.x.x)
+</span><span class='line'>;; WHEN: Sat Apr 20 18:08:19 2013
+</span><span class='line'>;; MSG SIZE  rcvd: 36
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>nslookup tool&#8230; I know</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>$ nslookup isc.org x.x.x.x
+</span><span class='line'>Server:         x.x.x.x
+</span><span class='line'>Address:        x.x.x.x#53
+</span><span class='line'>
+</span><span class='line'>** server can&#39;t find isc.org: REFUSED
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There you have it. You should take a look at <a href="http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack">http://blog.cloudflare.com/deep-inside-a-dns-amplification-ddos-attack</a> if you want a more detailed break down of this attack. I have better things to do now&#8230; like have a beer.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[New blog and Wiki]]></title>
+    <link href="http://ljunkie.github.io/blog/2013/04/20/new-blog-and-wiki/"/>
+    <updated>2013-04-20T13:34:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2013/04/20/new-blog-and-wiki</id>
+    <content type="html"><![CDATA[<p>I finally gave up on <a href="http://wordpress.org">wordpress</a> and switched to <a href="http://ocotopress.org">octopress</a>. I wanted something <strong><em>simple</em></strong> and <strong><em>clean</em></strong>. There are so many other reasons, but it&#8217;s the weekend and I don&#8217;t feel like <em>working</em>.</p>
+
+<p>I also rolled out a <a href="http://ljunkie.github.io//w.rarforge.com">wiki</a> recently which I started to use a month ago. It will probably have more detailed information about the posts here.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[X11forwarding via SSH &#8211; Ubuntu &#038; lightdm]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/"/>
+    <updated>2012-09-26T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Some of the errors I ran into</strong></p>
+
+<blockquote><ul>
+<li>DISPLAY is not set</li>
+<li>Failed to allocate internet-domain X11 display socket</li>
+<li>X11 forwarding request failed on channel 0</li>
+</ul>
+</blockquote>
+
+<p>1) <strong>Make sure you have the X11forwarding enabled.</strong></p>
+
+<p>Server: <strong>/etc/ssh/sshd_config</strong></p>
+
+<figure class='code'><figcaption><span>/etc/ssh/sshd_config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>X11Forwarding yes
+</span><span class='line'>X11DisplayOffset 10
+</span><span class='line'>AllowTcpForwarding yes`
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p>Client: <strong>/etc/ssh/ssh_config</strong></p>
+
+<figure class='code'><figcaption><span>/etc/ssh/sshd_config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>ForwardX11 yes
+</span><span class='line'>ForwardX11Trusted yes
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2) <strong>Enable lightdm to listen on TCP sockets</strong></p>
+
+<p>Modify and add line below to: <strong>/etc/lightdm/lightdm.conf</strong></p>
+
+<figure class='code'><figcaption><span>/etc/ssh/sshd_config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>xserver-allow-tcp=true
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>3) <strong>If you have disabled IPv6</strong>, one more update to sshd_config is needed<br/>
+Modify and add line below to: <strong>/etc/ssh/sshd_config</strong></p>
+
+<figure class='code'><figcaption><span>/etc/ssh/sshd_config</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>AddressFamily inet
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) <strong>Restart lightdm and sshd – or – Reboot</strong></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ssh-add on demand]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand/"/>
+    <updated>2012-04-16T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/16/ssh-add-on-demand</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong>Solution</strong>: bash alias - <code>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) &amp;&amp; ssh"</code></p>
+
+<p>Normally one would put this in their ~/.bash_profile. However with Ubuntu 11.10, at least with my install,~/.bash_profile is not included. The file to add this line to is:</p>
+
+<p><strong>~/.bash_aliases</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>alias ssh="( ssh-add -l &gt; /dev/null || ssh-add ) && ssh"</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>More Info:</strong>
+Ubuntu does state if ~/.bash_profile does exists, then ~/.profile will not be read, so I am using what has been setup to work by default.</p>
+
+<!-- more -->
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># cat ~/.profile
+</span><span class='line'># ~/.profile: executed by the command interpreter for login shells.
+</span><span class='line'># This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+</span><span class='line'># exists.
+</span><span class='line'>...
+</span><span class='line'>if [ -n "$BASH_VERSION" ]; then
+</span><span class='line'>    # include .bashrc if it exists
+</span><span class='line'>    if [ -f "$HOME/.bashrc" ]; then
+</span><span class='line'>        . "$HOME/.bashrc"
+</span><span class='line'>    fi
+</span><span class='line'>fi
+</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
+
+
+<p>~/.profile is set to include ~/.bash_rc which is set (at least on my system) to include ~/.bash_aliases</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># cat ~/.bashrc
+</span><span class='line'>...
+</span><span class='line'>if [ -f ~/.bash_aliases ]; then
+</span><span class='line'>    . ~/.bash_aliases
+</span><span class='line'>fi
+</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linux and the Intel Centrino Wireless-N 1030]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/"/>
+    <updated>2012-04-11T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>These changes are stilled needed as of Linux 3.0.0-17. The driver in use is iwlagn and I have seen other posts using the iwlwifi driver (untested).</p>
+
+<p><strong>Turn off Power Managment for wireless</strong><br/>
+Info: This should already be off when using AC, however we will want to turn this feature off for battery use.</p>
+
+<p>To check you status run the command below and look for Power Management<br/>
+- check this output on <strong>AC</strong> and <strong>Battery</strong> to verify it’s <strong>off</strong>.</p>
+
+<!-- more -->
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ iwconfig wlan0
+</span><span class='line'>wlan0     IEEE 802.11bg  ESSID:"------------"
+</span><span class='line'>          Mode:Managed  Frequency:2.462 GHz  Access Point: 00:1C:B3:AE:FF:A1
+</span><span class='line'>          Bit Rate=54 Mb/s   Tx-Power=15 dBm
+</span><span class='line'>          Retry  long limit:7   RTS thr:off   Fragment thr:off
+</span><span class='line'>          Encryption key:off
+</span><span class='line'>          Power Management:off
+</span><span class='line'>          Link Quality=55/70  Signal level=-55 dBm
+</span><span class='line'>          Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0
+</span><span class='line'>          Tx excessive retries:0  Invalid misc:396   Missed beacon:0</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>To disable permanently</strong> edit (as root) edit /usr/lib/pm-utils/power.d/wireless</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># /usr/lib/pm-utils/power.d/wireless
+</span><span class='line'>Change line 39 from "power on” to “power off”.</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Turn off Wireless-N features of the card</strong></p>
+
+<p>I know, this sounds odd since we all want our N to work, but sadly N currently does not does not work correctly under linux.</p>
+
+<p>This will unload the wifi module and load without wireless-N.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>sudo rmmod iwlwifi
+</span><span class='line'>sudo modprobe iwlwifi <span class="nv">11n_disable</span><span class="o">=</span>1<span class="sb">`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>If <code>11n_disable=1</code> causes the module to not load, try changing  it to <code>11n_disable50=1</code></li>
+<li>Persistent by adding to <code>/etc/modprobe.d/iwlwifi.conf</code></li>
+</ul>
+
+
+<p><strong> Finding which Kernel Module you are using  </strong>&#8211; iwlagn or iwlwifi &#8211;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>Info: refer to the lines <span class="s2">&quot;Kernel driver in use&quot;</span> and <span class="s2">&quot; Kernel modules&quot;</span>
+</span><span class='line'><span class="sb">`</span>sudo lspci -v  | grep -A10 <span class="s2">&quot;Centrino Wireless&quot;</span>
+</span><span class='line'>03:00.0 Network controller: Intel Corporation Centrino Wireless-N 1030 <span class="o">(</span>rev 34<span class="o">)</span>
+</span><span class='line'>        Subsystem: Intel Corporation Centrino Wireless-N 1030 BGN
+</span><span class='line'>        Flags: bus master, fast devsel, latency 0, IRQ 53
+</span><span class='line'>        Memory at f1b00000 <span class="o">(</span>64-bit, non-prefetchable<span class="o">)</span> <span class="o">[</span><span class="nv">size</span><span class="o">=</span>8K<span class="o">]</span>
+</span><span class='line'>        Capabilities: <span class="o">[</span>c8<span class="o">]</span> Power Management version 3
+</span><span class='line'>        Capabilities: <span class="o">[</span>d0<span class="o">]</span> MSI: Enable  <span class="nv">Count</span><span class="o">=</span>1/1 Maskable- 64bit
+</span><span class='line'>        Capabilities: <span class="o">[</span>e0<span class="o">]</span> Express Endpoint, MSI 00
+</span><span class='line'>        Capabilities: <span class="o">[</span>100<span class="o">]</span> Advanced Error Reporting
+</span><span class='line'>        Capabilities: <span class="o">[</span>140<span class="o">]</span> Device Serial Number bc-77-37-ff-ff-0a-43-bc
+</span><span class='line'>        Kernel driver in use: iwlagn
+</span><span class='line'>        Kernel modules: iwlagn<span class="sb">`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Slow SSH and PING related to Reverse DNS]]></title>
+    <link href="http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/"/>
+    <updated>2012-04-06T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p><strong> info: </strong>: slow ssh authentication, pings slow/timeout when using fqdn</p>
+
+<p><strong> issue: </strong>  SSH just sits here for a while when trying to connect.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>strace ssh myhostname ...
+</span><span class='line'>write<span class="o">(</span>5, <span class="s2">&quot;RESOLVE-ADDRESS 192.168.1.1n&quot;</span>, 27<span class="o">)</span> <span class="o">=</span> 27
+</span><span class='line'>...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Reason:</strong> mdns listed in nsswitch.conf doesn’t allow reverse dns to return failure immeditately when DNS lookup return NXDOMAIN.</p>
+
+<p><strong>Resolution:</strong>  modify  /etc/nsswitch.conf</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gd">- hosts:          files mdns4_minimal [NOTFOUND=return] dns mdns4</span>
+</span><span class='line'>  hosts: files mdns4_minimal [NOTFOUND=return] dns [NOTFOUND=return] mdns4
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[XBMC Nightly PPA for Ubuntu]]></title>
+    <link href="http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/"/>
+    <updated>2011-11-24T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>Here is a good XBMC stable and unstable/nightly PPA for Ubuntu 11.04 or 11.10</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-stable</p>
+
+<p>https://launchpad.net/~nathan-renniewaldock/ archive/xbmc-nightly</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Repace VINO with x11vnc on Login]]></title>
+    <link href="http://ljunkie.github.io/blog/2010/11/24/repace-vino-with-x11vnc-on-login/"/>
+    <updated>2010-11-24T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2010/11/24/repace-vino-with-x11vnc-on-login</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>Quick guide how to use VINO server and install x11vnc…</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get purge vino
+</span><span class='line'>sudo killall -9 vino-server
+</span><span class='line'>sudo apt-get install x11vnc
+</span><span class='line'>x11vnc -storepasswd</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>edit file <strong>/etc/gdm/custom.conf</strong></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>## add right below [daemon]
+</span><span class='line'>KillInitClients=false`</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>edit file <strong>/etc/gdm//Init/Default</strong></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># add right before the end of the file "exit 0"
+</span><span class='line'>/usr/bin/x11vnc -rfbauth  -o /var/log/x11vnc.log -shared -forever -bg -rfbport 5900`</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Ubuntu 10.04 Lucid 5.1 HDMI Audio (Intel G45) &#8211; Boxee 5.1 HDMI Audio]]></title>
+    <link href="http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio/"/>
+    <updated>2010-10-18T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2010/10/18/ubuntu-10-04-lucid-5-1-hdmi-audio-intel-g45-boxee-5-1-hdmi-audio</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>First of all. This is for a Asus P5Q-EM motherboard with Intel G45 onboard. This doc could work for others, but of course I have no clue!</p>
+
+<p>You can verify the hardware first by running :  <a href="http://alsa.opensrc.org/index.php/Speaker-test" title="aplay -l">aplay -l</a></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> aplay -l
+</span><span class='line'>**** List of PLAYBACK Hardware Devices ****
+</span><span class='line'>card 0: Intel [HDA Intel], device 0: ALC1200 Analog [ALC1200 Analog]
+</span><span class='line'>Subdevices: 1/1
+</span><span class='line'>Subdevice #0: subdevice #0
+</span><span class='line'>card 0: Intel [HDA Intel], device 1: ALC1200 Digital [ALC1200 Digital]
+</span><span class='line'>Subdevices: 1/1
+</span><span class='line'>Subdevice #0: subdevice #0
+</span><span class='line'>card 0: Intel [HDA Intel], device 3: INTEL HDMI 0 [INTEL HDMI 0]
+</span><span class='line'>Subdevices: 0/1
+</span><span class='line'>Subdevice #0: subdevice #0</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!-- more -->
+
+
+<p>You’ll notice card 0 device 3 is the Intel HDMI Audio.. If you don’t have the Intel, look for HDMI and figure out the card and device id for the HDMI out.</p>
+
+<p>A way to test the audio from the card is available by running this speaker-test on the console.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>speaker-test -Dhdmi:Intel -c6 -twavq</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If that doesn’t work, maybe you don’ thave the intel card, so the -D would not work for your. You can try (replace 0,3 with whatever card,device you have from the output above).</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>speaker-test -Dhw:0,3 -c6 -twavq</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>The Howto Start for getting 5.1 HDMI Audio in Ubuntu 10.04</h3>
+
+<p>1) Remove  PULSEAUDIO (replace with ALSA)</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get purge pulseaudio gstreamer0.10-pulseaudio</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo apt-get autoremove
+</span><span class='line'>sudo apt-get install alsa-base alsa-tools alsa-tools-gui alsa-utils alsa-oss linux-sound-base alsamixergui
+</span><span class='line'>sudo apt-get install esound esound-clients esound-common gnome-alsamixer</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2) Reboot</p>
+
+<p>3) Set default audio card (HDMI)  *this step I don’t think does much.. but I did it and my system works… so why not</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gstreamer-properties</span></code></pre></td></tr></table></div></figure>
+
+
+<p>4) THE MOST IMPORTANT STEP.! This will set the HDMI out as the default card so Boxee will work properly with your audio</p>
+
+<p>Create an ~/.asoundrc file for the user you login with when you run Boxee</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ cat &gt; ~/.asoundrc
+</span><span class='line'>
+</span><span class='line'>#START
+</span><span class='line'>pcm.dmixer {
+</span><span class='line'>type dmix
+</span><span class='line'>ipc_key 1024
+</span><span class='line'>ipc_key_add_uid false
+</span><span class='line'>ipc_perm 0660
+</span><span class='line'>slave  {
+</span><span class='line'>pcm "hw:0,3"
+</span><span class='line'>rate 48000
+</span><span class='line'>channels 2
+</span><span class='line'>format S32_LE
+</span><span class='line'>period_time 0
+</span><span class='line'>period_size 1024
+</span><span class='line'>buffer_time 0
+</span><span class='line'>buffer_size 4096
+</span><span class='line'>}
+</span><span class='line'>}
+</span><span class='line'>pcm.!default {
+</span><span class='line'>type plug
+</span><span class='line'>slave.pcm "dmixer"
+</span><span class='line'>}
+</span><span class='line'># END</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>ctrl-d</code> to end the cat</li>
+</ul>
+
+
+<p>5) Disable HARDWARE Acceleration for Video. Otherwise <a href="http://www.boxee.tv/" title="Boxee">Boxee</a> will just crash on any local video playback.</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li>go to – settings -> media -> advanced</li>
+<li>uncheck — ‘enable hardware assisited decoding when possible’</li>
+<li>Render Method: Software (or Auto might work)</li>
+</ul>
+
+
+<p>6) Sound Config Setup</p>
+
+<ul>
+<li>run <a href="http://www.boxee.tv/" title="Boxee">Boxee</a></li>
+<li><p>go to – settings -> system -> Audio Hardware</p></li>
+<li><p>Audio Output: Digital</p></li>
+<li>DTS Capable Reciever: checked</li>
+<li>Dolby Digital (AC3) Reciever: checked</li>
+<li>Audio output device: default</li>
+<li>Passthrough output device: default`</li>
+<li>Downmix multichannel audio to stereo: UNCHECK</li>
+</ul>
+
+
+<p>** NOTE: I will post how to get <a href="http://www.boxee.tv/" title="Boxee">BOXEE </a>installed soon since that was also a pain in the ass with 10.04 release.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[VMware errors &#8211; FC6 and/or 2.6.19 Kernel]]></title>
+    <link href="http://ljunkie.github.io/blog/2007/02/21/vmware-problems-in-fedora-core-6-andor-2619-kernel/"/>
+    <updated>2007-02-21T00:00:00-08:00</updated>
+    <id>http://ljunkie.github.io/blog/2007/02/21/vmware-problems-in-fedora-core-6-andor-2619-kernel</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>If you are using 2.6.19 kernel, then you will notice some errors with the vmware-config.pl script. If… actually, you better be using the 2.6.19 kernel now, or whatever the latest release is as of now</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> Error runninging vmware-config.pl :  
+</span><span class='line'> /tmp/vmware-config2/vmnet-only/userif.c: In function ‘VNetCopyDatagramToUser’:  
+</span><span class='line'> /tmp/vmware-config2/vmnet-only/userif.c:629: error: ‘CHECKSUM_HW’ undeclared (first use in this function)  
+</span><span class='line'> /tmp/vmware-config2/vmnet-only/userif.c:629: error: (Each undeclared identifier is reported only once  
+</span><span class='line'> /tmp/vmware-config2/vmnet-only/userif.c:629: error: for each function it appears in.)  
+</span><span class='line'> make[2]:   [/tmp/vmware-config2/vmnet-only/userif.o] Error 1  
+</span><span class='line'> make[1]:   [\_module\_/tmp/vmware-config2/vmnet-only] Error 2  
+</span><span class='line'> make[1]: Leaving directory `/usr/src/kernels/2.6.19-1.2911.fc6′  
+</span><span class='line'> make: [vmnet.ko] Error 2  
+</span><span class='line'> make: Leaving directory `/tmp/vmware-config2/vmnet-only’  
+</span><span class='line'> Unable to build the vmnet module.</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It seems CHECKSUM_HW has been remove from 2.6.19 and replaced with CHECKSUM_PARTIAL. You can either replace any CHECKSUM_HW lines with CHECKSUM_PARTION, or you can use the patch that Robin Kearney (usefulthings.org.uk) has writtenHow to use the Patch:</p>
+
+<!-- more -->
+
+
+<p><strong>FIX</strong> – As root:</p>
+
+<ul>
+<li>cd /tmp</li>
+<li>wget http://usefulthings.org.uk/wp-content/uploads/vmnet-only-2.6.19.patch</li>
+<li>cd /usr/lib/vmware/modules/source/</li>
+<li>cp vmnet.tar vmnet.tar.orig</li>
+<li>tar xf vmnet.tar</li>
+<li>patch -p0 &lt; /tmp/vmnet-only-2.6.19.patch</li>
+<li>tar cf vmnet.tar vmnet-only</li>
+<li>vmware-config.pl (if OS is FC6, this will probably fail again)<strong><br/>
+</strong></li>
+</ul>
+
+
+<p><strong>Fedora Core 6 will most likely have another error we need to fix:</strong></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> Using 2.6.x kernel build system.  
+</span><span class='line'> make: Entering directory `/tmp/vmware-config1/vmnet-only’  
+</span><span class='line'> make -C /lib/modules/2.6.19-1.2911.fc6/build/include/.. SUBDIRS=$PWD SRCROOT=$PWD/. modules  
+</span><span class='line'> make[1]: Entering directory `/usr/src/kernels/2.6.19-1.2911.fc6-i686′  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/driver.o  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/hub.o  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/userif.o  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/netif.o  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/bridge.o  
+</span><span class='line'> CC [M] /tmp/vmware-config1/vmnet-only/procfs.o  
+</span><span class='line'> /tmp/vmware-config1/vmnet-only/procfs.c:33:26: error: linux/config.h: No such file or directory  
+</span><span class='line'> make[2]: \***| [/tmp/vmware-config1/vmnet-only/procfs.o] Error 1  
+</span><span class='line'> make[1]: \***| [\_module\_/tmp/vmware-config1/vmnet-only] Error 2  
+</span><span class='line'> make[1]: Leaving directory `/usr/src/kernels/2.6.19-1.2911.fc6-i686′  
+</span><span class='line'> make: \***| [vmnet.ko] Error 2  
+</span><span class='line'> make: Leaving directory `/tmp/vmware-config1/vmnet-only’  
+</span><span class='line'> Unable to build the vmnet module.</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>FIX</strong> – as root:</p>
+
+<ul>
+<li>cd /usr/src/kernels/2.6.19-1.2911.fc6-i686/include/linux (or whatever kernel version you are using)</li>
+<li>touch config.h</li>
+<li>vmware-config.pl (should actually complete this time)</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Secure FTP (ProFTPD with TLS)]]></title>
+    <link href="http://ljunkie.github.io/blog/2006/09/01/secure-ftp-proftpd-with-tls/"/>
+    <updated>2006-09-01T00:00:00-07:00</updated>
+    <id>http://ljunkie.github.io/blog/2006/09/01/secure-ftp-proftpd-with-tls</id>
+    <content type="html"><![CDATA[<h1></h1>
+
+<p>I always wondered how hard it might be to get ftp running with encryption (preferably proFTPd since that has always been my choice ftp server).</p>
+
+<p>I did realize how easy it was. Of course again this documentation really only refers to Fedora Core 5. I am sure you can take this info and put it towards any other linux os.</p>
+
+<p><strong>proFTPd TLS extremely mini howto</strong></p>
+
+<ul>
+<li>edit /etc/proftpd.conf</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>## Add the Following lines.. or uncomment them# TLS  
+</span><span class='line'># Explained at http://www.castaglia.org/proftpd/modules/mod_tls.html  
+</span><span class='line'>TLSEngine on  
+</span><span class='line'>TLSRequired on  
+</span><span class='line'>TLSRSACertificateFile /etc/pki/tls/certs/proftpd.pem  
+</span><span class='line'>TLSRSACertificateKeyFile /etc/pki/tls/certs/proftpd-key.pem  
+</span><span class='line'>TLSCipherSuite ALL:!ADH:!DES  
+</span><span class='line'>TLSOptions NoCertRequest  
+</span><span class='line'>TLSVerifyClient off  
+</span><span class='line'>TLSLog /var/log/proftpd/tls.log</span></code></pre></td></tr></table></div></figure>
+
+
+<!-- more -->
+
+
+<ul>
+<li>Create the proftp.pem and proftpd-key.pem files</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> ## Run this command as root  
+</span><span class='line'>openssl req -new -x509 -days 365 -nodes -out /etc/pki/tls/certs/proftpd.pem -keyout /etc/pki/tls/certs/proftpd-key.pem</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Start the proFTPd service</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>## Run the command as root  
+</span><span class='line'>service restart proftpd</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Continue below if your FTP server is behind a firewall or is part of a NAT</p>
+
+<p><strong> Use the IP Nat Helper module </strong></p>
+
+<p>/etc/sysconfig/iptables-config</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gd">-IPTABLES_MODULES=&quot;&quot;</span>
+</span><span class='line'><span class="gi">+IPTABLES_MODULES=&quot;ip_nat_ftp&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong> OLD way </strong></p>
+
+<ul>
+<li>Allow passive ftp to work… need to specify what passive ports to use</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'>edit /etc/proftpd.conf
+</span><span class='line'>## Add the line below
+</span><span class='line'>PassivePorts 60000 60500
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Add the Passive ports through your firewall</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'>edit /etc/sysconfig/iptables
+</span><span class='line'>## Add the line below (may need some changing to fit the format)
+</span><span class='line'><span class="gd">-A RH-Firewall-1-INPUT -p tcp -m tcp –dport 60000:60050 -j ACCEPT</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+</feed>

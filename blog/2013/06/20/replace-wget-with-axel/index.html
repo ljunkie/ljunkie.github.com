@@ -1,0 +1,496 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Replace wget with axel - Linux Junkie</title>
+  <meta name="author" content="Rob Reed">
+
+  
+  <meta name="description" content="I have been using wget for ages without ever questioning it. Today I had to install FC18 on a dedicated server, so I found the link over at http:// &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Linux Junkie" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-40272078-2']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Linux Junkie</a></h1>
+  
+    <h2>Just Another Addict</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ljunkie.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Replace Wget With Axel</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-20T10:22:00-07:00" pubdate data-updated="true">Jun 20<span>th</span>, 2013</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I have been using wget for ages without ever questioning it. Today I had to install FC18 on a dedicated server, so I found the link over at <a href="http://fedoraproject.org/en/get-fedora-options#formats">http://fedoraproject.org/en/get-fedora-options#formats</a>. The url for FC18 is http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso. The FQDN download.fedoraproject.org is a CNAME pointing wildcard.fedoraproject.org which in turns resolved to other random IPs. Sometimes the IP you will get is not always the <em>best</em> possible connection, so your download speeds will vary. We can help fix this issue with axel using more download threads.</p>
+
+<h2>wget vs. axel</h2>
+
+<ul>
+<li><strong>wget</strong> - Downloads <strong>~1MB/s</strong></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'>0% [                                      ] 4,243,464   1.24MB/s  eta 58m 39
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><strong>axel</strong> - Downloads <strong>~40MB/s</strong> with 10 connections (<strong>-n 10</strong>)</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Starting download
+</span><span class='line'> [  0%]  .......... .......... .......... .......... ..........  [14556.7KB/s]
+</span><span class='line'> ...
+</span><span class='line'> ...
+</span><span class='line'> [ 99%]  .......... .......... .......... .......... ..........  [42171.2KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... .......... ..........  [42160.6KB/s]
+</span><span class='line'> [100%]  .......... .......... .......... ........
+</span><span class='line'>
+</span><span class='line'>Downloaded 4362.0 megabytes in 1:45 seconds. (42157.83 KB/s)</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<p><strong> Is 40 MB/s maybe too fast? Then limit it!</strong></p>
+
+<p>You can limit your speeds with -s (in bytes). I am not sure why they used bytes instead of something a little easier to short hand, but it works.</p>
+
+<ul>
+<li><strong>Axel</strong> - Limited to 10MB/s (<strong>10485760</strong> bytes)</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso
+</span><span class='line'> Starting download
+</span><span class='line'> [  0%]  .......... .......... .......... .......... ..........  [10766.6KB/s]
+</span><span class='line'> ...
+</span><span class='line'> ...
+</span><span class='line'> [  2%]  .......... .......... .......... .......... ..........  [9870.2KB/s]
+</span><span class='line'> [  2%]  .......... ........^C.. .......... .......... ..........  [9808.5KB/s]
+</span><span class='line'> [  2%]  .......... ........
+</span><span class='line'> Downloaded 71.0 megabytes in 7 seconds. (9808.50 KB/s)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>You will notice above, <strong>I killed the download with crtl-c</strong>, but that&#8217;s OK, we can easily <strong>resume</strong> it!</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -n10 -s 10485760 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso 
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso.0
+</span><span class='line'> State file found: 108204478 bytes downloaded, 4465684034 to go.
+</span><span class='line'> Starting download
+</span><span class='line'> 
+</span><span class='line'>         ,,,,,,,,,, ,,,,,,,,.. .......... .......... ..........  [ 498.3KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [ 995.1KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [1490.6KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [1984.9KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [2478.4KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [2970.3KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [10382.6KB/s]
+</span><span class='line'>       [  2%]  .......... .......... .......... .......... ..........  [10278.5KB/s]
+</span><span class='line'>   </span></code></pre></td></tr></table></div></figure>
+
+
+<p>There is also an <strong><em>alternate</em></strong> output with <strong>-a</strong> if you don&#8217;t like how verbose the output is normally.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> axel -a -n10 http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso -s 10485760
+</span><span class='line'> Initializing download: http://download.fedoraproject.org/pub/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso
+</span><span class='line'> File size: 4573888512 bytes
+</span><span class='line'> Opening output file Fedora-18-x86_64-DVD.iso.0
+</span><span class='line'> State file found: 114071526 bytes downloaded, 4459816986 to go.
+</span><span class='line'> Starting download
+</span><span class='line'> 
+</span><span class='line'> [  4%] [0    1    2     3    4    5    6    7    8    9   ] [   9.9MB/s] [06:58]^C
+</span><span class='line'> Downloaded 84.7 megabytes in 8 seconds. (10174.90 KB/s)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>installing?</h2>
+
+<ul>
+<li>Debian/Ubuntu</li>
+</ul>
+
+
+<p><code>apt-get install axel</code></p>
+
+<ul>
+<li>Redhat/Centos</li>
+</ul>
+
+
+<p><code>yum install axel</code></p>
+
+<ul>
+<li>OSX</li>
+</ul>
+
+
+<p><code>brew install axel</code></p>
+
+<h2>Source</h2>
+
+<ul>
+<li><p>main: <a href="http://axel.alioth.debian.org/">http://axel.alioth.debian.org/</a></p></li>
+<li><p>Freecode: <a href="http://freecode.com/projects/axel">http://freecode.com/projects/axel</a></p></li>
+<li><p>Fork: <a href="https://github.com/emiraga/axel">https://github.com/emiraga/axel</a></p></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Rob Reed</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-20T10:22:00-07:00" pubdate data-updated="true">Jun 20<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel/" data-via="" data-counturl="http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/" title="Previous Post: FreeRADIUS Proxy - Filter Radius Attributes">&laquo; FreeRADIUS Proxy - Filter Radius Attributes</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/07/02/plexwatch/" title="Next Post: plexWatch - push notification and history for PMS watched status">plexWatch - push notification and history for PMS watched status &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>About Me</h1>
+  <p>Proudly breaking linux for over 15 years. I live in Washington State, I'm married and I have a dog. I have been a system administrator with many other titles for over a decade. </p>
+
+<table>
+<tr><td colspan=2>&nbsp;&nbsp;&nbsp;<img src="/images/rarforge_email.png"></td></tr>
+<tr><td width=50px><strong>WIKI</strong>:</td><td> <a href="https://rarforge.com/w">rarforge.com/w</a></td></tr>
+<tr height=5px><td></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;<strong>IRC</strong>:</td><td> <a href="http://freenode.net/">freenode</a> @ljunkie</td></tr>
+</table>
+
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/07/02/plexwatch/">plexWatch - push notification and history for PMS watched status</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/20/replace-wget-with-axel/">Replace wget with axel</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/23/freeradius-proxy-filter-radius-attributes/">FreeRADIUS Proxy - Filter Radius Attributes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/dns-amplification-ddos-attack-isc-bind/">DNS Amplification DDoS Attack - ISC BIND</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/20/new-blog-and-wiki/">New blog and Wiki</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/26/x11forwarding-via-ssh-ubuntu-lightdm/">X11forwarding via SSH &#8211; Ubuntu &#038; lightdm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/16/ssh-add-on-demand/">ssh-add on demand</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/11/linux-and-the-intel-centrino-wireless-n-1030/">Linux and the Intel Centrino Wireless-N 1030</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/06/slow-ssh-and-ping-related-to-reverse-dns/">Slow SSH and PING related to Reverse DNS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2011/11/24/xbmc-nightly-ppa-for-ubuntu/">XBMC Nightly PPA for Ubuntu</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ljunkie">@ljunkie</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ljunkie',
+            count: 4,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Rob Reed -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxjunkie';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel/';
+        var disqus_url = 'http://ljunkie.github.io/blog/2013/06/20/replace-wget-with-axel/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<script src="//static.getclicky.com/js" type="text/javascript"></script>
+<script type="text/javascript">try{ clicky.init(100604256); }catch(e){}</script>
+<noscript><p><img alt="Clicky" width="1" height="1" src="//in.getclicky.com/100604256ns.gif" /></p></noscript>
+
+
+</body>
+</html>
